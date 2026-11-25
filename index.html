@@ -1,0 +1,2995 @@
+<!doctype html>
+<html lang="id" class="lenis">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AQUASCIENCE REVIEW — FPIK UNPAD</title>
+
+    <!-- Warna Tema Tab & Address Bar Browser (Biru #004b8e saat online di HP/Desktop) -->
+    <meta name="theme-color" content="#004b8e" />
+    <meta name="msapplication-TileColor" content="#004b8e" />
+
+    <!-- Ikon Tab Browser (Favicon): Ikon Buku Putih di Atas Background Biru #004b8e -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23004b8e'/%3E%3Cpath d='M14 18h14a4 4 0 0 1 4 4v26a3 3 0 0 0-3-3H14V18z' fill='none' stroke='%23ffffff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M50 18H36a4 4 0 0 0-4 4v26a3 3 0 0 1 3-3h15V18z' fill='none' stroke='%23ffffff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+
+    <!-- Google Fonts: Space Grotesk (Judul/Display) & Plus Jakarta Sans (Teks Isi) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN untuk tata letak responsif di semua ukuran device -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lenis Smooth Scroll untuk kelembutan inertia saat halaman digulir -->
+    <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+
+    <!-- React 18 & ReactDOM UMD -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel Standalone untuk menjalankan JSX langsung di browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Proteksi Klik Kanan & Pintasan Inspect Element / View Source -->
+    <script>
+      document.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+      });
+      document.addEventListener("keydown", function (e) {
+        const key = (e.key || "").toUpperCase();
+        if (e.key === "F12" || e.keyCode === 123 || ((e.ctrlKey || e.metaKey) && e.shiftKey && (key === "I" || key === "J" || key === "C")) || ((e.ctrlKey || e.metaKey) && (key === "U" || key === "S"))) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    </script>
+
+    <style>
+      /* ============================================================================
+         PENGATURAN DASAR HALAMAN (MENCEGAH SCROLL HORIZONTAL TANPA MERUSAK STICKY)
+         ============================================================================ */
+      html,
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: #ffffff;
+        color: #333333;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+        overflow-x: clip;
+      }
+
+      /* Aturan Lenis Smooth Scroll */
+      html.lenis,
+      html.lenis body {
+        height: auto;
+      }
+      .lenis.lenis-smooth {
+        scroll-behavior: auto !important;
+      }
+      .lenis.lenis-smooth [data-lenis-prevent] {
+        overscroll-behavior: contain;
+      }
+      .lenis.lenis-stopped {
+        overflow: hidden;
+      }
+
+      .font-display {
+        font-family: "Space Grotesk", sans-serif;
+      }
+      .font-sans-body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+
+      /* Animasi halus saat perpindahan halaman */
+      @keyframes pageFadeSlide {
+        0% {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-page-enter {
+        animation: pageFadeSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      /* Animasi kemunculan bertahap item menu di dalam dropdown taskbar */
+      @keyframes menuItemReveal {
+        0% {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-menu-item {
+        animation: menuItemReveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Wadah Utama Aplikasi React -->
+    <div id="root"></div>
+
+    <!-- Seluruh Kode Logika & Komponen React -->
+    <script type="text/babel">
+      const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+      /**
+       * ============================================================================
+       * 1. KONFIGURASI BACKEND API & KONTAK UTAMA
+       * ============================================================================
+       */
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzHNzbiKrz7EcXrRau_7ifQZXApXLS2QcreGctpNSCW6h3ZrBIYwPAERQzr4J2mpXOU/exec";
+
+      const getActiveMonthFolder = () => {
+        const monthsId = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const now = new Date();
+        return `${monthsId[now.getMonth()]} ${now.getFullYear()}`;
+      };
+
+      const ACTIVE_MONTH = getActiveMonthFolder();
+      const CONTACT_EMAIL_FPIK = "fpik@unpad.ac.id";
+      const CONTACT_EMAIL_TORGAS = "torgasblueenergy@gmail.com";
+      const CONTACT_EMAIL = CONTACT_EMAIL_FPIK;
+
+      const POWERED_BY_PARAGRAPH = "Powered by Torgas Blue Energy. Driving research collaboration, sustainable marine technology innovation, and scientific publication advancement at FPIK Universitas Padjadjaran.";
+
+      // Helper konversi File PDF ke teks Base64 untuk dikirim ke Google Apps Script
+      const fileToBase64 = (file) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const raw = String(reader.result || "");
+            const base64 = raw.includes(",") ? raw.split(",")[1] : raw;
+            resolve(base64);
+          };
+          reader.onerror = (err) => reject(err);
+          reader.readAsDataURL(file);
+        });
+
+      /**
+       * ============================================================================
+       * 1B. KAMUS TERJEMAHAN DWIBAHASA (INDONESIA <-> ENGLISH)
+       * ============================================================================
+       */
+      const DOMAIN_EN_MAP = {
+        "Ilmu Kelautan": "Marine Science",
+        Perikanan: "Fisheries",
+        "Semua Bidang": "All Fields",
+      };
+
+      const FIELD_EN_MAP = {
+        "Hidro-Oseanografi": "Hydro-Oceanography",
+        Konservasi: "Conservation",
+        Bioteknologi: "Biotechnology",
+        "Sumber Daya Perairan": "Aquatic Resources",
+        "Budidaya Perikanan": "Aquaculture",
+        "Teknologi Hasil Perikanan": "Fisheries Product Technology",
+        "Sosial Ekonomi Perikanan": "Fisheries Socio-Economics",
+        "Koordinator & Monitoring Semua Bidang Kajian": "Coordinator & Monitoring of All Research Fields",
+      };
+
+      const STATUS_EN_MAP = {
+        Selesai: "Completed",
+        "Sedang Direview": "Under Review",
+        "Dalam Antrean": "In Queue",
+      };
+
+      const translateDomain = (val, lang) => (lang === "en" && DOMAIN_EN_MAP[val] ? DOMAIN_EN_MAP[val] : val);
+      const translateField = (val, lang) => (lang === "en" && FIELD_EN_MAP[val] ? FIELD_EN_MAP[val] : val);
+      const translateStatus = (val, lang) => (lang === "en" && STATUS_EN_MAP[val] ? STATUS_EN_MAP[val] : val);
+
+      /**
+       * ============================================================================
+       * 2. KONFIGURASI GAMBAR & LINK WEBSITE LOGO HEADER (FPIK UNPAD × TORGAS)
+       * ============================================================================
+       */
+      const LOGO_FPIK_UNPAD = "./GAMBAR/fpik-unpad.png";
+      const URL_FPIK_UNPAD = "https://fpik.unpad.ac.id/";
+
+      const LOGO_TORGAS_BLUE_ENERGY = "./GAMBAR/TORGAS.png";
+      const URL_TORGAS_BLUE_ENERGY = "https://torgasblueenergy.com/";
+
+      /**
+       * ============================================================================
+       * 3. KONFIGURASI GAMBAR SLIDESHOW BERANDA (FULL-SCREEN HERO BACKGROUND)
+       * ============================================================================
+       */
+      const HERO_SLIDE_IMAGES = [
+        {
+          src: "./GAMBAR/SLIDE-1.jpg",
+          fallbackUrl: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1920&q=80",
+          alt: "Riset Kelautan dan Ekosistem Pesisir FPIK Unpad",
+        },
+        {
+          src: "./GAMBAR/SLIDE-2.jpg",
+          fallbackUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1920&q=80",
+          alt: "Eksplorasi Terumbu Karang dan Biota Laut",
+        },
+        {
+          src: "./GAMBAR/SLIDE-3.jpg",
+          fallbackUrl: "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?auto=format&fit=crop&w=1920&q=80",
+          alt: "Inovasi Perikanan Berkelanjutan",
+        },
+      ];
+
+      /**
+       * ============================================================================
+       * 3A. KONFIGURASI GAMBAR LATAR & KARTU (ILMU KELAUTAN & PERIKANAN)
+       * ============================================================================
+       */
+      const DOMAIN_CARD_BACKGROUNDS = {
+        default: {
+          src: "./GAMBAR/BACKGROUND_KARTU.jpg",
+          fallbackUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80",
+          alt: "Latar Belakang Ruang Pengajuan Naskah",
+        },
+        kelautan: {
+          src: "./GAMBAR/KELAUTAN.jpg",
+          fallbackUrl: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1920&q=80",
+          alt: "Bidang Ilmu Kelautan",
+        },
+        perikanan: {
+          src: "./GAMBAR/PERIKANAN.jpg",
+          fallbackUrl: "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?auto=format&fit=crop&w=1920&q=80",
+          alt: "Bidang Perikanan",
+        },
+      };
+
+      /**
+       * ============================================================================
+       * 3B. KONFIGURASI GAMBAR & BIDANG KAJIAN (ILMU KELAUTAN & PERIKANAN)
+       * ============================================================================
+       */
+      const SUB_DOMAIN_SHOWCASE = {
+        kelautan: {
+          domainLabel: "Ilmu Kelautan",
+          domainLabelEn: "Marine Science",
+          items: [
+            {
+              id: "hidro-oseanografi",
+              title: "Hidro-Oseanografi",
+              titleEn: "Hydro-Oceanography",
+              subtitle: "Dinamika arus laut, gelombang, pasang surut, batimetri, penginderaan jauh & pemodelan pesisir",
+              subtitleEn: "Ocean current dynamics, waves, tides, bathymetry, remote sensing & coastal modeling",
+              src: "./GAMBAR/HIDRO-OSEANOGRAFI.jpg",
+              fallbackUrl: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=1920&q=80",
+            },
+            {
+              id: "konservasi",
+              title: "Konservasi",
+              titleEn: "Conservation",
+              subtitle: "Ekosistem terumbu karang, padang lamun, hutan mangrove, kawasan lindung & rehabilitasi pesisir",
+              subtitleEn: "Coral reef ecosystems, seagrass beds, mangrove forests, marine protected areas & coastal rehabilitation",
+              src: "./GAMBAR/KONSERVASI.jpg",
+              fallbackUrl: "https://images.unsplash.com/photo-1546026423-cc4642628d2b?auto=format&fit=crop&w=1920&q=80",
+            },
+            {
+              id: "bioteknologi",
+              title: "Bioteknologi",
+              titleEn: "Biotechnology",
+              subtitle: "Bioprospeksi biota laut, mikrobiologi kelautan, senyawa bioaktif & rekayasa genetika organisme laut",
+              subtitleEn: "Marine bioprospecting, marine microbiology, bioactive compounds & genetic engineering of marine organisms",
+              src: "./GAMBAR/BIOTEKNOLOGI.jpg",
+              fallbackUrl: "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=1920&q=80",
+            },
+          ],
+        },
+        perikanan: {
+          domainLabel: "Perikanan",
+          domainLabelEn: "Fisheries",
+          items: [
+            {
+              id: "sumber-daya-perairan",
+              title: "Sumber Daya Perairan",
+              titleEn: "Aquatic Resources",
+              subtitle: "Manajemen stok ikan, ekologi perairan tawar-laut, alat tangkap ramah lingkungan & dinamika populasi",
+              subtitleEn: "Fish stock management, freshwater-marine ecology, eco-friendly fishing gear & population dynamics",
+              src: "./GAMBAR/SDP.jpg",
+              fallbackUrl: "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?auto=format&fit=crop&w=1920&q=80",
+            },
+            {
+              id: "budidaya-perikanan",
+              title: "Budidaya Perikanan",
+              titleEn: "Aquaculture",
+              subtitle: "Akuakultur modern, sistem bioflok, nutrisi & pakan ikan, pembenihan serta kesehatan organisme akuatik",
+              subtitleEn: "Modern aquaculture, biofloc systems, fish nutrition & feed, hatchery, and aquatic organism health",
+              src: "./GAMBAR/BUDIDAYA.jpg",
+              fallbackUrl: "https://images.unsplash.com/photo-1524704654690-b56c05c78a00?auto=format&fit=crop&w=1920&q=80",
+            },
+            {
+              id: "teknologi-hasil-perikanan",
+              title: "Teknologi Hasil Perikanan",
+              titleEn: "Fisheries Product Technology",
+              subtitle: "Pengolahan pascapanen, rantai dingin, keamanan pangan hasil laut & diversifikasi produk perikanan",
+              subtitleEn: "Post-harvest processing, cold chain logistics, seafood safety & fisheries product diversification",
+              src: "./GAMBAR/HASIL PERIKANAN.jpg",
+              fallbackUrl: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=1920&q=80",
+            },
+            {
+              id: "sosial-ekonomi-perikanan",
+              title: "Sosial Ekonomi Perikanan",
+              titleEn: "Fisheries Socio-Economics",
+              subtitle: "Rantai pasok & pemasaran, pemberdayaan masyarakat pesisir, kebijakan kelautan & ekonomi biru",
+              subtitleEn: "Supply chain & marketing, coastal community empowerment, marine policy & blue economy",
+              src: "./GAMBAR/SOSIAL EKONOMI.jpg",
+              fallbackUrl: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1920&q=80",
+            },
+          ],
+        },
+      };
+
+      const JOURNAL_INDEX_OPTIONS = ["SINTA 5", "SINTA 4", "SINTA 3", "SINTA 2", "SINTA 1", "Scopus Q4", "Scopus Q3", "Scopus Q2", "Scopus Q1"];
+
+      /**
+       * ============================================================================
+       * 4. KUMPULAN IKON SVG RINGAN
+       * ============================================================================
+       */
+      const Icon = ({ children, className = "w-5 h-5" }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+          {children}
+        </svg>
+      );
+
+      const WavesIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+          <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+          <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+        </Icon>
+      );
+
+      const FishIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z" />
+          <path d="M18 12v.5" />
+          <path d="M16 17.93a9.77 9.77 0 0 1 0-11.86" />
+          <path d="M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33" />
+        </Icon>
+      );
+
+      const FileTextIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+          <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+          <path d="M10 9H8" />
+          <path d="M16 13H8" />
+          <path d="M16 17H8" />
+        </Icon>
+      );
+
+      const UploadIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" x2="12" y1="3" y2="15" />
+        </Icon>
+      );
+
+      const CheckCircleIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </Icon>
+      );
+
+      const LockIcon = ({ className }) => (
+        <Icon className={className}>
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </Icon>
+      );
+
+      const MailIcon = ({ className }) => (
+        <Icon className={className}>
+          <rect width="20" height="16" x="2" y="4" rx="2" />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </Icon>
+      );
+
+      const ExternalLinkIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M15 3h6v6" />
+          <path d="M10 14 21 3" />
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        </Icon>
+      );
+
+      const ArrowRightIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M5 12h14" />
+          <path d="m12 5 7 7-7 7" />
+        </Icon>
+      );
+
+      const ShieldCheckIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+          <path d="m9 12 2 2 4-4" />
+        </Icon>
+      );
+
+      const SearchIcon = ({ className }) => (
+        <Icon className={className}>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </Icon>
+      );
+
+      const PlusIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M5 12h14" />
+          <path d="M12 5v14" />
+        </Icon>
+      );
+
+      const TrashIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M3 6h18" />
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+        </Icon>
+      );
+
+      const LogOutIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" x2="9" y1="12" y2="12" />
+        </Icon>
+      );
+
+      const DownloadIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" x2="12" y1="15" y2="3" />
+        </Icon>
+      );
+
+      const SendIcon = ({ className }) => (
+        <Icon className={className}>
+          <path d="m22 2-7 20-4-9-9-4Z" />
+          <path d="M22 2 11 13" />
+        </Icon>
+      );
+
+      const AlertCircleIcon = ({ className }) => (
+        <Icon className={className}>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" x2="12" y1="8" y2="12" />
+          <line x1="12" x2="12.01" y1="16" y2="16" />
+        </Icon>
+      );
+
+      const ClockIcon = ({ className }) => (
+        <Icon className={className}>
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </Icon>
+      );
+
+      /**
+       * ============================================================================
+       * 4B. KOMPONEN BIDANG KAJIAN (ALIRAN SCROLL NORMAL TOP-TO-BOTTOM + TULISAN
+       *     MENONJOL KE DEPAN SAAT BERADA DI TENGAH LAYAR)
+       * ============================================================================
+       */
+      function StudyShowcaseSection({ item, idx, totalItems, domainLabel, lang, onSelectField }) {
+        const sectionRef = useRef(null);
+        const titleBlockRef = useRef(null);
+        const dimOverlayRef = useRef(null);
+
+        const displayTitle = lang === "en" && item.titleEn ? item.titleEn : item.title;
+        const displaySubtitle = lang === "en" && item.subtitleEn ? item.subtitleEn : item.subtitle;
+
+        useEffect(() => {
+          let rafId = null;
+
+          const updateFocus = () => {
+            const sectionEl = sectionRef.current;
+            const titleEl = titleBlockRef.current;
+            const overlayEl = dimOverlayRef.current;
+            if (!sectionEl || !titleEl) return;
+
+            const rect = sectionEl.getBoundingClientRect();
+            const vh = window.innerHeight || 800;
+            const sectionCenter = rect.top + rect.height / 2;
+            const viewportCenter = vh / 2;
+
+            const dist = Math.min(Math.abs(sectionCenter - viewportCenter) / (vh * 0.65), 1);
+            const focus = 1 - dist;
+
+            const scale = 0.84 + focus * 0.22;
+            const opacity = 0.35 + focus * 0.65;
+            const translateZ = focus * 36;
+
+            titleEl.style.transform = `perspective(900px) translate3d(0, 0, ${translateZ.toFixed(1)}px) scale(${scale.toFixed(4)})`;
+            titleEl.style.opacity = opacity.toFixed(3);
+
+            if (overlayEl) {
+              const bgAlpha = 0.68 - focus * 0.24;
+              overlayEl.style.backgroundColor = `rgba(0, 0, 0, ${bgAlpha.toFixed(3)})`;
+            }
+          };
+
+          const handleScroll = () => {
+            if (rafId) return;
+            rafId = window.requestAnimationFrame(() => {
+              updateFocus();
+              rafId = null;
+            });
+          };
+
+          updateFocus();
+          window.addEventListener("scroll", handleScroll, { passive: true });
+          window.addEventListener("resize", handleScroll, { passive: true });
+
+          return () => {
+            if (rafId) window.cancelAnimationFrame(rafId);
+            window.removeEventListener("scroll", handleScroll);
+            window.removeEventListener("resize", handleScroll);
+          };
+        }, []);
+
+        return (
+          <section
+            ref={sectionRef}
+            onClick={() => onSelectField(item.title)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelectField(item.title);
+              }
+            }}
+            className="group relative w-full min-h-[85vh] sm:min-h-[92vh] bg-neutral-900 text-[#ffffff] border-b border-[#ffffff]/15 overflow-hidden flex flex-col justify-between cursor-pointer select-none"
+          >
+            {/* Gambar Latar Belakang Bidang Kajian */}
+            <div className="absolute inset-0 z-0 pointer-events-none select-none">
+              <img
+                src={item.src}
+                alt={`${domainLabel} - ${displayTitle}`}
+                onError={(e) => {
+                  if (item.fallbackUrl && e.currentTarget.src !== item.fallbackUrl) {
+                    e.currentTarget.src = item.fallbackUrl;
+                  }
+                }}
+                className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+              <div ref={dimOverlayRef} className="absolute inset-0 bg-black/50 transition-colors duration-150" />
+            </div>
+
+            {/* Baris Atas: Label Jurusan & Nomor Bidang Kajian */}
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 flex items-center justify-between gap-4 text-[11px] sm:text-xs font-display font-bold uppercase tracking-[0.2em] text-[#dfdfdf]">
+              <span>
+                {domainLabel} • 0{idx + 1} / 0{totalItems}
+              </span>
+            </div>
+
+            {/* Bagian Tengah: Judul Bidang Kajian Menonjol ke Depan saat Ter-scroll ke Tengah */}
+            <div ref={titleBlockRef} className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 my-auto text-center will-change-transform">
+              <span className="inline-block text-[10px] sm:text-xs font-display font-bold uppercase tracking-[0.28em] text-[#38bdf8] mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                {lang === "en" ? `RESEARCH FIELD 0${idx + 1}` : `BIDANG KAJIAN 0${idx + 1}`}
+              </span>
+              <h2 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold uppercase tracking-tight leading-[1.08] text-[#ffffff] drop-shadow-[0_6px_24px_rgba(0,0,0,0.95)] group-hover:text-[#38bdf8] transition-colors duration-300">
+                {displayTitle}
+              </h2>
+              <p className="mt-4 text-xs sm:text-base text-[#f1f5f9] max-w-2xl mx-auto leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">{displaySubtitle}</p>
+            </div>
+
+            {/* Baris Bawah: Indikator Aksi */}
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 flex items-center justify-between gap-4 border-t border-[#ffffff]/15 pt-4">
+              <span className="text-[11px] uppercase tracking-widest text-[#dfdfdf]">
+                {lang === "en" ? (idx < totalItems - 1 ? "Scroll down for next research field ↓" : "Last research field") : idx < totalItems - 1 ? "Gulir ke bawah untuk kajian berikutnya ↓" : "Bidang kajian terakhir"}
+              </span>
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#0693e3] group-hover:bg-[#ffffff] text-[#ffffff] group-hover:text-[#004b8e] text-xs font-display font-bold uppercase tracking-wider transition-colors shrink-0">
+                <span>{lang === "en" ? "Select Field" : "Pilih Kajian"}</span>
+                <ArrowRightIcon className="w-4 h-4" />
+              </span>
+            </div>
+          </section>
+        );
+      }
+
+      /**
+       * ============================================================================
+       * 5. KOMPONEN UTAMA APLIKASI (TERHUBUNG LIVE KE GOOGLE APPS SCRIPT)
+       * ============================================================================
+       */
+      function App() {
+        // State Bahasa Aktif: 'id' (Indonesia) | 'en' (English)
+        const [lang, setLang] = useState("id");
+        const isEn = lang === "en";
+
+        useEffect(() => {
+          document.documentElement.lang = lang;
+        }, [lang]);
+
+        // State navigasi halaman aktif:
+        // 'home' | 'kelautan' | 'perikanan' | 'submit' | 'tracker' | 'login' | 'dashboard'
+        const [activeView, setActiveView] = useState("home");
+
+        // State latar belakang dinamis untuk section "Masuk ke Ruang Pengajuan Naskah"
+        const [activeDomainBg, setActiveDomainBg] = useState("default");
+
+        // Ref Lenis Smooth Scroll
+        const lenisRef = useRef(null);
+
+        // State bidang utama & sub-bidang kajian yang dipilih menuju Form Submit
+        const [submitDomain, setSubmitDomain] = useState("kelautan");
+        const [selectedStudyField, setSelectedStudyField] = useState("Hidro-Oseanografi");
+
+        // State buka/tutup panel dropdown taskbar
+        const [isMenuOpen, setIsMenuOpen] = useState(false);
+        const [hoveredMenuKey, setHoveredMenuKey] = useState(null);
+
+        // =========================================================================
+        // INISIALISASI LENIS SMOOTH SCROLL GLOBAL
+        // =========================================================================
+        useEffect(() => {
+          if (!window.Lenis) return;
+
+          const lenis = new window.Lenis({
+            lerp: 0.085,
+            duration: 1.25,
+            smoothWheel: true,
+            wheelMultiplier: 0.95,
+            touchMultiplier: 1.5,
+          });
+          lenisRef.current = lenis;
+
+          let rafId;
+          function raf(time) {
+            lenis.raf(time);
+            rafId = requestAnimationFrame(raf);
+          }
+          rafId = requestAnimationFrame(raf);
+
+          return () => {
+            cancelAnimationFrame(rafId);
+            lenis.destroy();
+            lenisRef.current = null;
+          };
+        }, []);
+
+        useEffect(() => {
+          if (!lenisRef.current) return;
+          if (isMenuOpen) {
+            lenisRef.current.stop();
+          } else {
+            lenisRef.current.start();
+          }
+        }, [isMenuOpen]);
+
+        const scrollToTop = (immediate = true) => {
+          if (lenisRef.current) {
+            lenisRef.current.start();
+            lenisRef.current.scrollTo(0, { immediate });
+          } else {
+            window.scrollTo({ top: 0, behavior: immediate ? "instant" : "smooth" });
+          }
+        };
+
+        // =========================================================================
+        // LOGIKA SLIDESHOW BACKGROUND BERANDA
+        // =========================================================================
+        const [currentSlide, setCurrentSlide] = useState(0);
+
+        useEffect(() => {
+          if ((activeView !== "home" && activeView !== "login") || HERO_SLIDE_IMAGES.length <= 1) return;
+
+          const slideTimer = setInterval(() => {
+            setCurrentSlide((prevSlide) => (prevSlide + 1) % HERO_SLIDE_IMAGES.length);
+          }, 5000);
+
+          return () => clearInterval(slideTimer);
+        }, [activeView]);
+
+        // =========================================================================
+        // LOGIKA KEDALAMAN PINNED / STICKY STACKING SECTIONS BERANDA
+        // =========================================================================
+        const [heroStackProgress, setHeroStackProgress] = useState(0);
+
+        useEffect(() => {
+          if (activeView !== "home") {
+            setHeroStackProgress(0);
+            return;
+          }
+
+          let ticking = false;
+          const handleStackScroll = () => {
+            if (!ticking) {
+              window.requestAnimationFrame(() => {
+                const viewportH = window.innerHeight || 800;
+                const progress = Math.min(Math.max(window.scrollY / viewportH, 0), 1);
+                setHeroStackProgress(progress);
+                ticking = false;
+              });
+              ticking = true;
+            }
+          };
+
+          window.addEventListener("scroll", handleStackScroll, { passive: true });
+          return () => window.removeEventListener("scroll", handleStackScroll);
+        }, [activeView]);
+
+        // =========================================================================
+        // STATE DATA LIVE DARI GOOGLE SHEETS (TANPA DATA DUMMY)
+        // =========================================================================
+        const [manuscripts, setManuscripts] = useState([]);
+        const [isLoadingData, setIsLoadingData] = useState(true);
+
+        const fetchPublicManuscripts = useCallback(async () => {
+          try {
+            setIsLoadingData(true);
+            const res = await fetch(WEB_APP_URL, { method: "GET" });
+            const json = await res.json();
+            if (json && json.success && Array.isArray(json.manuscripts)) {
+              setManuscripts(json.manuscripts);
+            }
+          } catch (err) {
+            console.error("Gagal memuat antrean publik:", err);
+          } finally {
+            setIsLoadingData(false);
+          }
+        }, []);
+
+        // Muat data antrean publik saat aplikasi pertama kali dibuka
+        useEffect(() => {
+          fetchPublicManuscripts();
+        }, [fetchPublicManuscripts]);
+
+        // Fungsi masuk ke halaman Form Submit setelah memilih Bidang Kajian
+        const handleOpenSubmitForm = (domainKey, studyFieldTitle) => {
+          setIsMenuOpen(false);
+          setHoveredMenuKey(null);
+          setSubmitDomain(domainKey);
+          setSelectedStudyField(studyFieldTitle);
+          setSubmitReceipt(null);
+          setFormError("");
+          setActiveView("submit");
+          scrollToTop(true);
+        };
+
+        const activeQueueList = useMemo(() => {
+          return manuscripts.filter((m) => m.status !== "Selesai");
+        }, [manuscripts]);
+
+        const completedCount = useMemo(() => {
+          return manuscripts.filter((m) => m.status === "Selesai").length;
+        }, [manuscripts]);
+
+        // State formulir pengajuan manuskrip (Publik Tanpa Login)
+        const [authorName, setAuthorName] = useState("");
+        const [authorEmail, setAuthorEmail] = useState("");
+        const [affiliation, setAffiliation] = useState("");
+        const [manuscriptTitle, setManuscriptTitle] = useState("");
+        const [pdfFile, setPdfFile] = useState(null);
+        const [formError, setFormError] = useState("");
+        const [isSubmitting, setIsSubmitting] = useState(false);
+        const [submitReceipt, setSubmitReceipt] = useState(null);
+        const fileInputRef = useRef(null);
+
+        // State Halaman Tracker
+        const [trackerDomain, setTrackerDomain] = useState("kelautan");
+        const [selectedTrackerField, setSelectedTrackerField] = useState(null);
+        const [selectedTrackerId, setSelectedTrackerId] = useState(null);
+        const [trackerSearchInput, setTrackerSearchInput] = useState("");
+        const [showGlobalSearchResults, setShowGlobalSearchResults] = useState(false);
+
+        // State login & sesi portal Reviewer / Admin Besar
+        const [loggedReviewer, setLoggedReviewer] = useState(null);
+        const [loginEmail, setLoginEmail] = useState("");
+        const [loginPin, setLoginPin] = useState("");
+        const [loginError, setLoginError] = useState("");
+        const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+        // State lembar kerja Reviewer
+        const [dashboardFilter, setDashboardFilter] = useState("Semua");
+        const [dashboardStudyFieldFilter, setDashboardStudyFieldFilter] = useState("Semua Kajian");
+        const [selectedReviewId, setSelectedReviewId] = useState(null);
+        const [revisedPdfFile, setRevisedPdfFile] = useState(null);
+        const revisedFileInputRef = useRef(null);
+        const [reviewNotesInput, setReviewNotesInput] = useState("");
+        const [journalListInput, setJournalListInput] = useState([{ name: "", index: "SINTA 2", url: "", reason: "" }]);
+        const [isStartingReview, setIsStartingReview] = useState(false);
+        const [isCompletingReview, setIsCompletingReview] = useState(false);
+        const [reviewErrorBanner, setReviewErrorBanner] = useState("");
+        const [reviewSuccessBanner, setReviewSuccessBanner] = useState("");
+
+        // Daftar 4 menu utama di dalam dropdown taskbar
+        const NAV_MENU_ITEMS = [
+          {
+            key: "home",
+            label: isEn ? "Home" : "Beranda",
+            subtitle: isEn ? "Main Page" : "Halaman Utama",
+          },
+          {
+            key: "kelautan",
+            label: isEn ? "Marine Science" : "Ilmu Kelautan",
+            subtitle: isEn ? "3 Marine Research Fields" : "3 Bidang Kajian Kelautan",
+          },
+          {
+            key: "perikanan",
+            label: isEn ? "Fisheries" : "Perikanan",
+            subtitle: isEn ? "4 Fisheries Research Fields" : "4 Bidang Kajian Perikanan",
+          },
+          {
+            key: "tracker",
+            label: "Tracker",
+            subtitle: isEn ? "Monitor Review Queue" : "Pantau Antrean Review",
+          },
+        ];
+
+        // Fungsi pindah halaman sekaligus menutup panel menu dropdown
+        const handleNavigate = (targetView) => {
+          setIsMenuOpen(false);
+          setHoveredMenuKey(null);
+          setActiveView(targetView);
+          if ((targetView === "tracker" || targetView === "home") && !loggedReviewer) {
+            fetchPublicManuscripts();
+          }
+          scrollToTop(true);
+        };
+
+        const currentDomainCanonical = submitDomain === "kelautan" ? "Ilmu Kelautan" : "Perikanan";
+        const currentDomainLabel = translateDomain(currentDomainCanonical, lang);
+
+        // Validasi unggah file PDF penulis (Maksimal 5 MB)
+        const handlePdfSelect = (e) => {
+          const file = e.target.files[0];
+          setFormError("");
+          if (!file) return;
+
+          if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+            setFormError(isEn ? "File format rejected. The system only accepts documents in PDF (.pdf) format." : "Format file ditolak. Sistem hanya menerima dokumen dalam format PDF (.pdf).");
+            setPdfFile(null);
+            return;
+          }
+
+          if (file.size > 5 * 1024 * 1024) {
+            setFormError(isEn ? "File size exceeds the maximum limit of 5 MB." : "Ukuran file melebihi batas maksimal 5 MB.");
+            setPdfFile(null);
+            return;
+          }
+
+          setPdfFile(file);
+        };
+
+        // Proses pengiriman manuskrip baru ke Backend Google Apps Script
+        const handleManuscriptSubmit = async (e) => {
+          e.preventDefault();
+          if (isSubmitting) return;
+          setFormError("");
+
+          if (!authorName.trim() || !manuscriptTitle.trim() || !authorEmail.trim() || !pdfFile) {
+            setFormError(isEn ? "Please complete the author name, manuscript title, author email, and upload a PDF file." : "Mohon lengkapi nama penulis, judul manuskrip, email penulis, dan unggah file PDF.");
+            return;
+          }
+
+          try {
+            setIsSubmitting(true);
+            const fileBase64 = await fileToBase64(pdfFile);
+            const todayStr = new Date().toLocaleDateString(isEn ? "en-US" : "id-ID", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            });
+
+            const payload = {
+              action: "submit",
+              monthFolder: ACTIVE_MONTH,
+              date: todayStr,
+              authorName: authorName.trim(),
+              authorEmail: authorEmail.trim(),
+              affiliation: affiliation.trim() || (isEn ? "Independent Researcher" : "Peneliti Independen"),
+              domain: currentDomainCanonical,
+              studyField: selectedStudyField,
+              title: manuscriptTitle.trim(),
+              originalFileName: pdfFile.name,
+              fileBase64: fileBase64,
+            };
+
+            const response = await fetch(WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (!result || !result.success) {
+              throw new Error(result?.message || "Server menolak pengajuan.");
+            }
+
+            // Tambahkan data baru ke state agar langsung tampil di statistik & Tracker
+            const publicSafeRecord = {
+              id: result.manuscript.id,
+              date: result.manuscript.date,
+              monthFolder: result.manuscript.monthFolder,
+              authorName: result.manuscript.authorName,
+              domain: result.manuscript.domain,
+              studyField: result.manuscript.studyField,
+              status: result.manuscript.status,
+              progressStep: result.manuscript.progressStep,
+              reviewerName: result.manuscript.reviewerName,
+              reviewNotes: "",
+              recommendedJournals: [],
+            };
+
+            setManuscripts((prev) => [...prev, loggedReviewer ? result.manuscript : publicSafeRecord]);
+            setSubmitReceipt({ ...result.manuscript, queueNumber: result.queueNumber });
+
+            // Reset input formulir
+            setAuthorName("");
+            setAuthorEmail("");
+            setAffiliation("");
+            setManuscriptTitle("");
+            setPdfFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+          } catch (err) {
+            setFormError(isEn ? `Failed to upload manuscript: ${err.message}. Please check your internet connection and try again.` : `Gagal mengunggah manuskrip: ${err.message}. Pastikan koneksi internet stabil dan silakan coba kembali.`);
+          } finally {
+            setIsSubmitting(false);
+          }
+        };
+
+        // Proses autentikasi login ke Server Google Apps Script (Zero-Leak)
+        const handleReviewerLogin = async (e) => {
+          e.preventDefault();
+          if (isLoggingIn) return;
+          setLoginError("");
+
+          if (!loginEmail.trim() || !loginPin.trim()) {
+            setLoginError(isEn ? "Please enter your registered email and PIN." : "Mohon masukkan email terdaftar dan PIN Anda.");
+            return;
+          }
+
+          try {
+            setIsLoggingIn(true);
+            const response = await fetch(WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "login",
+                email: loginEmail.trim(),
+                pin: loginPin.trim(),
+              }),
+            });
+
+            const result = await response.json();
+
+            if (!result || !result.success) {
+              setLoginError(isEn ? "Access denied. Email or PIN is not registered in the official account list." : result?.message || "Akses ditolak. Email atau PIN tidak terdaftar dalam daftar akun resmi.");
+              return;
+            }
+
+            const allowedList = Array.isArray(result.manuscripts) ? result.manuscripts : [];
+            setLoggedReviewer(result.reviewer);
+            setManuscripts(allowedList);
+            setLoginEmail("");
+            setLoginPin("");
+            setDashboardFilter("Semua");
+            setDashboardStudyFieldFilter("Semua Kajian");
+            setReviewSuccessBanner("");
+            setReviewErrorBanner("");
+
+            if (allowedList.length > 0) {
+              setSelectedReviewId(allowedList[0].id);
+            } else {
+              setSelectedReviewId(null);
+            }
+
+            setActiveView("dashboard");
+            scrollToTop(true);
+          } catch (err) {
+            setLoginError(isEn ? "Unable to connect to authentication server. Please try again." : "Gagal terhubung ke server autentikasi. Silakan coba beberapa saat lagi.");
+          } finally {
+            setIsLoggingIn(false);
+          }
+        };
+
+        // Tandai naskah "Sedang Direview" di Google Sheets
+        const handleStartReview = async (manuscriptId) => {
+          if (!loggedReviewer || isStartingReview) return;
+          try {
+            setIsStartingReview(true);
+            const response = await fetch(WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "startReview",
+                id: manuscriptId,
+                reviewerName: loggedReviewer.name,
+              }),
+            });
+            const result = await response.json();
+            if (result && result.success) {
+              setManuscripts((prev) =>
+                prev.map((m) =>
+                  m.id === manuscriptId
+                    ? {
+                        ...m,
+                        status: "Sedang Direview",
+                        progressStep: 3,
+                        reviewerName: loggedReviewer.name,
+                      }
+                    : m,
+                ),
+              );
+            }
+          } catch (err) {
+            console.error("Gagal memperbarui status review:", err);
+          } finally {
+            setIsStartingReview(false);
+          }
+        };
+
+        // Tambah / hapus / ubah baris jurnal rekomendasi pada dashboard Reviewer
+        const handleAddJournalRow = () => {
+          setJournalListInput([...journalListInput, { name: "", index: "SINTA 2", url: "", reason: "" }]);
+        };
+
+        const handleRemoveJournalRow = (idx) => {
+          if (journalListInput.length <= 1) return;
+          setJournalListInput(journalListInput.filter((_, i) => i !== idx));
+        };
+
+        const handleUpdateJournalRow = (idx, field, val) => {
+          const updated = journalListInput.map((item, i) => (i === idx ? { ...item, [field]: val } : item));
+          setJournalListInput(updated);
+        };
+
+        // Validasi file PDF hasil revisi reviewer (Maksimal 5 MB)
+        const handleRevisedPdfSelect = (e) => {
+          const file = e.target.files[0];
+          setReviewErrorBanner("");
+          if (!file) {
+            setRevisedPdfFile(null);
+            return;
+          }
+          if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+            setReviewErrorBanner(isEn ? "Revised file must be in PDF (.pdf) format." : "File hasil koreksi wajib berformat PDF (.pdf).");
+            setRevisedPdfFile(null);
+            return;
+          }
+          if (file.size > 5 * 1024 * 1024) {
+            setReviewErrorBanner(isEn ? "Revised PDF file size exceeds the 5 MB limit." : "Ukuran file PDF hasil koreksi melebihi batas maksimal 5 MB.");
+            setRevisedPdfFile(null);
+            return;
+          }
+          setRevisedPdfFile(file);
+        };
+
+        // Simpan dan kirim hasil review ke penulis + notifikasi laporan ke Admin Besar & Torgas
+        const handleCompleteReview = async (e) => {
+          e.preventDefault();
+          if (!selectedReviewId || !activeReviewManuscript || isCompletingReview) return;
+          setReviewErrorBanner("");
+          setReviewSuccessBanner("");
+
+          if (!revisedPdfFile) {
+            setReviewErrorBanner(isEn ? "Please upload the reviewer's revised PDF file before sending." : "Mohon unggah file PDF hasil koreksi reviewer terlebih dahulu sebelum mengirim.");
+            return;
+          }
+
+          try {
+            setIsCompletingReview(true);
+            const revisedBase64 = await fileToBase64(revisedPdfFile);
+            const validJournals = journalListInput
+              .filter((j) => j.name.trim() !== "")
+              .map((j) => ({
+                ...j,
+                url: j.url.trim() || "https://sinta.kemdikbud.go.id/",
+              }));
+
+            const finalNotes =
+              reviewNotesInput.trim() ||
+              (isEn
+                ? "The manuscript has been reviewed according to scientific writing standards. Please check the inline comments in the attached PDF file."
+                : "Naskah telah dikoreksi sesuai kaidah penulisan ilmiah. Silakan periksa catatan langsung pada file PDF terlampir.");
+
+            const response = await fetch(WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "completeReview",
+                id: selectedReviewId,
+                reviewerName: loggedReviewer.name,
+                revisedFileName: revisedPdfFile.name,
+                revisedFileBase64: revisedBase64,
+                reviewNotes: finalNotes,
+                recommendedJournals: validJournals,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (!result || !result.success) {
+              throw new Error(result?.message || "Gagal memproses pengiriman hasil review.");
+            }
+
+            const savedRevisedName = result.revisedFileName || revisedPdfFile.name;
+
+            setManuscripts((prev) =>
+              prev.map((m) =>
+                m.id === selectedReviewId
+                  ? {
+                      ...m,
+                      status: "Selesai",
+                      progressStep: 4,
+                      reviewerName: loggedReviewer.name,
+                      revisedFileName: savedRevisedName,
+                      revisedFileUrl: result.revisedFileUrl || "",
+                      reviewNotes: finalNotes,
+                      recommendedJournals: validJournals,
+                    }
+                  : m,
+              ),
+            );
+
+            setReviewSuccessBanner(
+              isEn
+                ? `Revised PDF (${savedRevisedName}) & ${validJournals.length} journal recommendations for ${selectedReviewId} have been emailed to the author (${activeReviewManuscript.authorEmail}), and a completion notice has been sent to Super Admin & Torgas Blue Energy!`
+                : `File PDF revisi (${savedRevisedName}) & ${validJournals.length} rekomendasi jurnal untuk kode ${selectedReviewId} berhasil dikirim ke email penulis (${activeReviewManuscript.authorEmail}), serta notifikasi laporan telah dikirim ke Admin Besar & Torgas Blue Energy!`,
+            );
+
+            setRevisedPdfFile(null);
+            if (revisedFileInputRef.current) revisedFileInputRef.current.value = "";
+            setReviewNotesInput("");
+            setJournalListInput([{ name: "", index: "SINTA 2", url: "", reason: "" }]);
+          } catch (err) {
+            setReviewErrorBanner(isEn ? `Failed to send review results: ${err.message}` : `Gagal mengirim hasil review: ${err.message}`);
+          } finally {
+            setIsCompletingReview(false);
+          }
+        };
+
+        // Fungsi memilih manuskrip di Tracker
+        const handleSelectTrackedManuscript = (item) => {
+          if (!item) return;
+          const domainKey = item.domain === "Ilmu Kelautan" ? "kelautan" : "perikanan";
+          setTrackerDomain(domainKey);
+          setSelectedTrackerField(item.studyField || null);
+          setSelectedTrackerId(item.id);
+          setShowGlobalSearchResults(false);
+        };
+
+        // Pencarian Lintas Semua Jurusan & Semua Bidang Kajian
+        const globalTrackerSearchResults = useMemo(() => {
+          const q = trackerSearchInput.trim().toLowerCase();
+          if (!q) return [];
+          return manuscripts.filter(
+            (m) =>
+              m.id.toLowerCase().includes(q) ||
+              m.authorName.toLowerCase().includes(q) ||
+              (m.domain && m.domain.toLowerCase().includes(q)) ||
+              (m.domain && translateDomain(m.domain, "en").toLowerCase().includes(q)) ||
+              (m.studyField && m.studyField.toLowerCase().includes(q)) ||
+              (m.studyField && translateField(m.studyField, "en").toLowerCase().includes(q)) ||
+              (m.status && m.status.toLowerCase().includes(q)) ||
+              (m.status && translateStatus(m.status, "en").toLowerCase().includes(q)),
+          );
+        }, [manuscripts, trackerSearchInput]);
+
+        // Data manuskrip yang sedang dibuka detail progresnya
+        const trackedManuscript = useMemo(() => {
+          if (!selectedTrackerId) return null;
+          return manuscripts.find((m) => m.id === selectedTrackerId) || null;
+        }, [manuscripts, selectedTrackerId]);
+
+        const trackedQueuePosition = useMemo(() => {
+          if (!trackedManuscript || trackedManuscript.status === "Selesai") return null;
+          const idx = activeQueueList.findIndex((item) => item.id === trackedManuscript.id);
+          return idx !== -1 ? idx + 1 : null;
+        }, [activeQueueList, trackedManuscript]);
+
+        // Daftar manuskrip sesuai hak akses (Admin Besar = semua, Reviewer = hanya bidang kajiannya)
+        const accessibleDashboardManuscripts = useMemo(() => {
+          if (!loggedReviewer) return [];
+          if (loggedReviewer.role === "admin") return manuscripts;
+          return manuscripts.filter((m) => m.domain.toLowerCase() === loggedReviewer.specialty.toLowerCase() && (!m.studyField || m.studyField.toLowerCase() === loggedReviewer.expertise.toLowerCase()));
+        }, [manuscripts, loggedReviewer]);
+
+        const filteredDashboardManuscripts = useMemo(() => {
+          return accessibleDashboardManuscripts.filter((m) => {
+            if (dashboardFilter === "Menunggu" && m.status === "Selesai") return false;
+            if (loggedReviewer && loggedReviewer.role === "admin" && (dashboardFilter === "Ilmu Kelautan" || dashboardFilter === "Perikanan") && m.domain !== dashboardFilter) {
+              return false;
+            }
+            if (dashboardStudyFieldFilter !== "Semua Kajian" && (m.studyField || "").toLowerCase() !== dashboardStudyFieldFilter.toLowerCase()) {
+              return false;
+            }
+            return true;
+          });
+        }, [accessibleDashboardManuscripts, dashboardFilter, dashboardStudyFieldFilter, loggedReviewer]);
+
+        const activeReviewManuscript = useMemo(() => {
+          if (accessibleDashboardManuscripts.length === 0) return null;
+          return accessibleDashboardManuscripts.find((m) => m.id === selectedReviewId) || filteredDashboardManuscripts[0] || accessibleDashboardManuscripts[0];
+        }, [accessibleDashboardManuscripts, filteredDashboardManuscripts, selectedReviewId]);
+
+        return (
+          /* =====================================================================
+             WADAH UTAMA APLIKASI
+             ===================================================================== */
+          <div className="min-h-screen pt-16 sm:pt-20 bg-[#ffffff] text-[#333333] font-sans-body flex flex-col">
+            {/* =====================================================================
+              HEADER UTAMA TERKUNCI DI ATAS (FIXED TOP BAR)
+             ===================================================================== */}
+            <header className="fixed top-0 left-0 right-0 z-50 bg-[#ffffff]/95 backdrop-blur-md text-[#333333] border-b border-[#e1e1e1] shadow-xs">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
+                {/* 1. BAGIAN KIRI: DUAL LOGO + JUDUL BERANDA */}
+                <div className="flex items-center justify-start min-w-0">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Wadah 2 Logo Kolaborasi */}
+                    <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                      {/* TAUTAN LOGO 1: FPIK UNPAD */}
+                      <a
+                        href={URL_FPIK_UNPAD}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={isEn ? "Visit Official FPIK Unpad Website" : "Kunjungi Website Resmi FPIK Unpad"}
+                        className="inline-flex items-center group/fpik cursor-pointer"
+                      >
+                        <img
+                          src={LOGO_FPIK_UNPAD}
+                          alt="Logo FPIK Unpad"
+                          className="h-9 sm:h-11 lg:h-13 w-auto object-contain transition-transform duration-300 group-hover/fpik:scale-105"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            e.currentTarget.nextSibling.style.display = "inline-block";
+                          }}
+                        />
+                        <span style={{ display: "none" }} className="text-[11px] font-display font-bold text-[#004b8e] underline">
+                          FPIK UNPAD
+                        </span>
+                      </a>
+
+                      {/* Tanda Kolaborasi (×) */}
+                      <span className="text-xs sm:text-sm font-display font-bold text-[#0693e3] select-none">×</span>
+
+                      {/* TAUTAN LOGO 2: TORGAS BLUE ENERGY */}
+                      <a
+                        href={URL_TORGAS_BLUE_ENERGY}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={isEn ? "Visit Official Torgas Blue Energy Website" : "Kunjungi Website Resmi Torgas Blue Energy"}
+                        className="inline-flex items-center group/torgas cursor-pointer"
+                      >
+                        <img
+                          src={LOGO_TORGAS_BLUE_ENERGY}
+                          alt="Logo Torgas Blue Energy"
+                          className="h-9 sm:h-11 lg:h-13 w-auto object-contain transition-transform duration-300 group-hover/torgas:scale-105"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            e.currentTarget.nextSibling.style.display = "inline-block";
+                          }}
+                        />
+                        <span style={{ display: "none" }} className="text-[11px] font-display font-bold text-[#004b8e] underline">
+                          TORGAS
+                        </span>
+                      </a>
+                    </div>
+
+                    {/* TOMBOL TEKS JUDUL (Klik untuk kembali ke halaman Beranda) */}
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate("home")}
+                      title={isEn ? "Back to AQUASCIENCE REVIEW Home" : "Kembali ke Beranda AQUASCIENCE REVIEW"}
+                      className="hidden sm:flex flex-col justify-center pl-2.5 md:pl-3.5 border-l border-[#e1e1e1] text-left group/title cursor-pointer"
+                    >
+                      <span className="font-display font-bold text-xs md:text-sm lg:text-base tracking-tight text-[#000000] group-hover/title:text-[#004b8e] transition-colors leading-tight whitespace-nowrap">AQUASCIENCE REVIEW</span>
+                      <span className="font-display font-bold text-xs md:text-sm lg:text-base tracking-tight text-[#0693e3] leading-tight whitespace-nowrap">FPIK UNPAD</span>
+                      <span className="text-[8px] md:text-[9px] lg:text-[10px] uppercase tracking-widest text-[#666666] font-medium leading-none mt-1 whitespace-nowrap">Fisheries & Marine science</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. BAGIAN TENGAH: TOMBOL PEMICU MENU (MENU = / CLOSE ✕) */}
+                <div className="flex items-center justify-center shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsMenuOpen((prev) => !prev)}
+                    aria-expanded={isMenuOpen}
+                    className="px-2.5 sm:px-5 py-2.5 flex items-center gap-1.5 sm:gap-3 text-xs sm:text-sm font-display font-bold uppercase tracking-[0.18em] text-[#004b8e] hover:text-[#0693e3] transition-colors cursor-pointer select-none"
+                  >
+                    <span>{isMenuOpen ? "CLOSE" : "MENU"}</span>
+                    {isMenuOpen ? (
+                      <span className="text-base leading-none font-normal transition-transform duration-300 rotate-90">✕</span>
+                    ) : (
+                      <span className="flex flex-col gap-1.5 w-4 sm:w-5">
+                        <span className="w-full h-[2px] bg-current block transition-all"></span>
+                        <span className="w-full h-[2px] bg-current block transition-all"></span>
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* 3. BAGIAN KANAN: TOMBOL GESER BAHASA (IND <-> ENG) + LOGIN / DASHBOARD */}
+                <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
+                  {/* TOMBOL SLIDER TERJEMAHAN (IND <-> ENG) */}
+                  <button
+                    type="button"
+                    onClick={() => setLang((prev) => (prev === "id" ? "en" : "id"))}
+                    aria-label={isEn ? "Ganti bahasa ke Indonesia" : "Translate website to English"}
+                    title={isEn ? "Mode Bahasa: English (Klik untuk ke Indonesia)" : "Mode Bahasa: Indonesia (Klik untuk ke English)"}
+                    className="relative inline-flex items-center bg-[#f1f5f9] border border-[#cbd5e1] hover:border-[#004b8e] p-0.5 h-8 sm:h-9 w-[82px] sm:w-[96px] cursor-pointer select-none overflow-hidden transition-colors"
+                  >
+                    <span className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] bg-[#004b8e] transition-transform duration-300 ease-out ${isEn ? "translate-x-[calc(100%+2px)]" : "translate-x-0"}`} />
+                    <span className={`relative z-10 w-1/2 text-center font-display text-[10px] sm:text-xs font-bold tracking-wider transition-colors duration-300 ${!isEn ? "text-[#ffffff]" : "text-[#475569]"}`}>IND</span>
+                    <span className={`relative z-10 w-1/2 text-center font-display text-[10px] sm:text-xs font-bold tracking-wider transition-colors duration-300 ${isEn ? "text-[#ffffff]" : "text-[#475569]"}`}>ENG</span>
+                  </button>
+
+                  {loggedReviewer ? (
+                    <button
+                      onClick={() => handleNavigate("dashboard")}
+                      className="inline-flex items-stretch bg-[#0693e3] hover:bg-[#004b8e] text-[#ffffff] text-[10px] sm:text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      <span className="px-2.5 sm:px-4 py-2 sm:py-2.5 flex items-center gap-1.5 sm:gap-2">
+                        <ShieldCheckIcon className="w-3.5 h-3.5" />
+                        <span>DASHBOARD</span>
+                      </span>
+                      <span className="px-2 sm:px-2.5 py-2 sm:py-2.5 bg-[#ffffff]/15 flex items-center justify-center border-l border-[#ffffff]/25">✓</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleNavigate("login")}
+                      className="inline-flex items-stretch bg-[#004b8e] hover:bg-[#0693e3] text-[#ffffff] text-[10px] sm:text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      <span className="px-2.5 sm:px-4 py-2 sm:py-2.5 flex items-center gap-1.5 sm:gap-2">
+                        <LockIcon className="w-3.5 h-3.5" />
+                        <span>LOGIN</span>
+                      </span>
+                      <span className="px-2 sm:px-2.5 py-2 sm:py-2.5 bg-[#ffffff]/15 flex items-center justify-center border-l border-[#ffffff]/25">+</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* PANEL DROPDOWN OVERLAY BIRU (3 KOLOM: MENU | PARAGRAF & 2 EMAIL | REKAP) */}
+              <div
+                data-lenis-prevent
+                className={`absolute top-full left-0 right-0 z-50 bg-[#004b8e] text-[#ffffff] border-b border-[#0693e3]/40 shadow-2xl transition-all duration-300 ease-out origin-top ${
+                  isMenuOpen ? "opacity-100 translate-y-0 visible max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto py-8 sm:py-12" : "opacity-0 -translate-y-2 invisible max-h-0 overflow-hidden py-0 pointer-events-none"
+                }`}
+              >
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-10 items-start">
+                  {/* KOLOM 1 (KIRI - 4 Kolom): DAFTAR MENU NAVIGASI UTAMA */}
+                  <nav className="md:col-span-4 flex flex-col space-y-2 sm:space-y-3">
+                    {NAV_MENU_ITEMS.map((item, idx) => {
+                      const isActive = activeView === item.key || (activeView === "submit" && submitDomain === item.key);
+                      const isHighlighted = hoveredMenuKey ? hoveredMenuKey === item.key : isActive;
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onMouseEnter={() => setHoveredMenuKey(item.key)}
+                          onMouseLeave={() => setHoveredMenuKey(null)}
+                          onClick={() => handleNavigate(item.key)}
+                          style={{ animationDelay: `${idx * 50}ms` }}
+                          className={`group flex items-center gap-3 sm:gap-4 text-left py-1.5 transition-all duration-300 cursor-pointer ${isMenuOpen ? "animate-menu-item" : ""}`}
+                        >
+                          <span className={`w-3 sm:w-3.5 h-3 sm:h-3.5 shrink-0 transition-all duration-300 ${isHighlighted ? "bg-[#38bdf8] scale-100 opacity-100" : "bg-[#ffffff]/25 scale-50 opacity-0"}`} />
+                          <div className={`transition-transform duration-300 ${isHighlighted ? "translate-x-2" : "translate-x-0"}`}>
+                            <span
+                              className={`font-display text-2xl sm:text-4xl lg:text-[42px] font-bold tracking-tight block leading-none transition-colors duration-300 ${
+                                isHighlighted ? "text-[#38bdf8]" : "text-[#ffffff] group-hover:text-[#38bdf8]"
+                              }`}
+                            >
+                              {item.label}
+                            </span>
+                            <span className="text-[10px] sm:text-[11px] uppercase tracking-widest text-[#cbd5e1] mt-1 block">{item.subtitle}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </nav>
+
+                  {/* KOLOM 2 (TENGAH - 5 Kolom): PARAGRAF PENGANTAR & 2 KONTAK EMAIL */}
+                  <div className="md:col-span-5 flex flex-col justify-between space-y-6 border-t md:border-t-0 md:border-l border-[#ffffff]/15 pt-6 md:pt-0 md:pl-6 lg:pl-8">
+                    <p className="text-xs sm:text-sm text-[#e2e8f0] leading-relaxed">{POWERED_BY_PARAGRAPH}</p>
+
+                    <div className="pt-4 border-t border-[#ffffff]/15">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-[#93c5fd] block mb-3">CONTACT</span>
+
+                      <div className="space-y-3">
+                        {/* Tautan Email 1: FPIK Unpad */}
+                        <a
+                          href={`mailto:${CONTACT_EMAIL_FPIK}?subject=${isEn ? "Inquiry%20Clinic%20Manuscripts%20FPIK%20Unpad" : "Pertanyaan%20Clinic%20Manuscripts%20FPIK%20Unpad"}`}
+                          className="group/mail1 flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-[#ffffff] hover:text-[#38bdf8] transition-colors break-all"
+                        >
+                          <span className="w-7 h-7 bg-[#ffffff]/10 border border-[#ffffff]/20 group-hover/mail1:border-[#38bdf8] group-hover/mail1:bg-[#38bdf8] group-hover/mail1:text-[#004b8e] text-[#38bdf8] flex items-center justify-center shrink-0 transition-colors">
+                            <MailIcon className="w-3.5 h-3.5" />
+                          </span>
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-[#cbd5e1] block leading-none mb-0.5">FPIK Unpad</span>
+                            <span className="underline underline-offset-4">{CONTACT_EMAIL_FPIK}</span>
+                          </div>
+                        </a>
+
+                        {/* Tautan Email 2: Torgas Blue Energy */}
+                        <a
+                          href={`mailto:${CONTACT_EMAIL_TORGAS}?subject=${isEn ? "Collaboration%20Torgas%20Blue%20Energy%20-%20Clinic%20Manuscripts" : "Kolaborasi%20Torgas%20Blue%20Energy%20-%20Clinic%20Manuscripts"}`}
+                          className="group/mail2 flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-[#ffffff] hover:text-[#38bdf8] transition-colors break-all"
+                        >
+                          <span className="w-7 h-7 bg-[#ffffff]/10 border border-[#ffffff]/20 group-hover/mail2:border-[#38bdf8] group-hover/mail2:bg-[#38bdf8] group-hover/mail2:text-[#004b8e] text-[#38bdf8] flex items-center justify-center shrink-0 transition-colors">
+                            <MailIcon className="w-3.5 h-3.5" />
+                          </span>
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-[#cbd5e1] block leading-none mb-0.5">Torgas Blue Energy</span>
+                            <span className="underline underline-offset-4">{CONTACT_EMAIL_TORGAS}</span>
+                          </div>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* KOLOM 3 (KANAN - 3 Kolom): REKAP ANTREAN & SELESAI DIREVIEW */}
+                  <div className="md:col-span-3 border-t md:border-t-0 md:border-l border-[#ffffff]/15 pt-6 md:pt-0 md:pl-6 lg:pl-8 flex flex-col justify-between space-y-4">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-[#93c5fd] block mb-3">{isEn ? "MANUSCRIPT STATUS SUMMARY" : "REKAP STATUS NASKAH"}</span>
+
+                      <div className="space-y-3">
+                        <div className="bg-[#ffffff]/10 border border-[#ffffff]/20 p-4">
+                          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#e2e8f0] mb-1">
+                            <span className="w-2 h-2 bg-[#f2552c] inline-block shrink-0"></span>
+                            <span>{isEn ? "ACTIVE QUEUE" : "ANTREAN AKTIF"}</span>
+                          </div>
+                          <p className="font-display text-2xl sm:text-3xl font-bold text-[#ffffff]">
+                            {isLoadingData ? "..." : activeQueueList.length} <span className="text-sm font-sans-body font-semibold text-[#cbd5e1]">{isEn ? "Manuscripts" : "Naskah"}</span>
+                          </p>
+                        </div>
+
+                        <div className="bg-[#ffffff]/10 border border-[#ffffff]/20 p-4">
+                          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#e2e8f0] mb-1">
+                            <span className="w-2 h-2 bg-[#38bdf8] inline-block shrink-0"></span>
+                            <span>{isEn ? "REVIEW COMPLETED" : "SELESAI DIREVIEW"}</span>
+                          </div>
+                          <p className="font-display text-2xl sm:text-3xl font-bold text-[#38bdf8]">
+                            {isLoadingData ? "..." : completedCount} <span className="text-sm font-sans-body font-semibold text-[#cbd5e1]">{isEn ? "Manuscripts" : "Naskah"}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate("tracker")}
+                      className="w-full py-2.5 px-4 bg-[#0693e3] hover:bg-[#ffffff] text-[#ffffff] hover:text-[#004b8e] text-[11px] font-display font-bold uppercase tracking-wider transition-colors flex items-center justify-between cursor-pointer"
+                    >
+                      <span>{isEn ? "MONITOR QUEUE" : "PANTAU ANTREAN"}</span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            {/* Backdrop transparan kebiruan saat menu terbuka */}
+            {isMenuOpen && <div onClick={() => setIsMenuOpen(false)} className="fixed inset-0 bg-[#004b8e]/25 backdrop-blur-[2px] z-40 transition-opacity" aria-hidden="true" />}
+
+            {/* =====================================================================
+              VIEW 1: HALAMAN BERANDA — PINNED / STICKY STACKING SECTIONS
+             ===================================================================== */}
+            {activeView === "home" && (
+              <main key="view-home" className="flex-1 relative animate-page-enter">
+                {/* LAPISAN 1 (z-10): PINNED HERO SLIDESHOW */}
+                <section className="sticky top-16 sm:top-20 z-10 w-full min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-5rem)] bg-neutral-900 text-[#ffffff] overflow-hidden flex flex-col justify-between">
+                  {/* Gambar Slide Murni */}
+                  <div
+                    style={{
+                      transform: `scale(${1 - heroStackProgress * 0.04})`,
+                    }}
+                    className="absolute inset-0 z-0 pointer-events-none select-none transition-transform duration-150 ease-out will-change-transform"
+                  >
+                    {HERO_SLIDE_IMAGES.map((slide, index) => {
+                      const isActive = index === currentSlide;
+                      return (
+                        <img
+                          key={index}
+                          src={slide.src}
+                          alt={slide.alt}
+                          onError={(e) => {
+                            if (slide.fallbackUrl && e.currentTarget.src !== slide.fallbackUrl) {
+                              e.currentTarget.src = slide.fallbackUrl;
+                            }
+                          }}
+                          className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-[1200ms] ease-in-out ${isActive ? "opacity-100 scale-100" : "opacity-0 scale-105"}`}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Lapisan redup halus yang hanya muncul saat Lapisan 2 naik menimpa */}
+                  <div style={{ opacity: heroStackProgress * 0.45 }} className="absolute inset-0 z-[1] bg-black pointer-events-none transition-opacity duration-150" />
+
+                  <div className="hidden sm:block h-4 relative z-10" />
+
+                  {/* Konten Utama Hero (Judul & Statistik Antrean Live) */}
+                  <div
+                    style={{
+                      transform: `translateY(-${heroStackProgress * 28}px)`,
+                      opacity: 1 - heroStackProgress * 0.35,
+                    }}
+                    className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center lg:items-end my-auto will-change-transform"
+                  >
+                    {/* Kolom Kiri: Judul Utama */}
+                    <div className="lg:col-span-8">
+                      <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl xl:text-[64px] font-bold tracking-tight leading-[1.1] text-[#ffffff] drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
+                        <span className="block">{isEn ? "Scientific Manuscript Review" : "Review Manuskrip Ilmiah"}</span>
+                        <span className="block text-[#38bdf8] mt-1.5 sm:mt-2">{isEn ? "Fisheries & Marine Science" : "Perikanan & Kelautan"}</span>
+                      </h1>
+                    </div>
+
+                    {/* Kolom Kanan: Deskripsi Singkat & Kotak Statistik */}
+                    <div className="lg:col-span-4 lg:border-l lg:border-[#ffffff]/40 lg:pl-8">
+                      <p className="text-[#ffffff] text-sm sm:text-base leading-relaxed mb-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                        {isEn
+                          ? "Upload your PDF manuscript and let our reviewer team evaluate your work. Receive detailed corrections, revision feedback, and accredited journal recommendations tailored to your research topic and field."
+                          : "Unggah naskah PDF Anda dan tunggu proses penelaahan oleh tim reviewer kami. Dapatkan hasil koreksi, masukan perbaikan, serta rekomendasi jurnal terakreditasi yang sesuai dengan topik dan bidang penelitian Anda."}
+                      </p>
+
+                      <div className="bg-black/45 backdrop-blur-md p-4 border border-[#ffffff]/30 grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-[11px] uppercase tracking-wider text-[#f1f5f9] block mb-1">{isEn ? "In Queue" : "Dalam Antrean"}</span>
+                          <span className="font-display text-xl sm:text-2xl font-bold text-[#ffffff]">
+                            {isLoadingData ? "..." : activeQueueList.length} {isEn ? "Manuscripts" : "Naskah"}
+                          </span>
+                        </div>
+                        <div className="border-l border-[#ffffff]/30 pl-4">
+                          <span className="text-[11px] uppercase tracking-wider text-[#f1f5f9] block mb-1">{isEn ? "Completed" : "Selesai Direview"}</span>
+                          <span className="font-display text-xl sm:text-2xl font-bold text-[#38bdf8]">
+                            {isLoadingData ? "..." : completedCount} {isEn ? "Manuscripts" : "Naskah"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Indikator Slide di Bagian Bawah Layar */}
+                  <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 bg-black/35 backdrop-blur-xs px-3 py-2 border border-[#ffffff]/20" role="tablist" aria-label={isEn ? "Select Background Image" : "Pilih Gambar Latar"}>
+                      {HERO_SLIDE_IMAGES.map((_, idx) => {
+                        const isCurrent = idx === currentSlide;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setCurrentSlide(idx)}
+                            aria-label={isEn ? `Show slide ${idx + 1}` : `Tampilkan slide ${idx + 1}`}
+                            className={`h-1.5 transition-all duration-500 cursor-pointer ${isCurrent ? "w-8 sm:w-10 bg-[#38bdf8]" : "w-3 sm:w-4 bg-[#ffffff]/60 hover:bg-[#ffffff]"}`}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    <span className="px-2.5 py-1 bg-black/35 backdrop-blur-xs border border-[#ffffff]/20 text-[11px] font-display font-bold tracking-widest text-[#ffffff] uppercase">
+                      0{currentSlide + 1} / 0{HERO_SLIDE_IMAGES.length}
+                    </span>
+                  </div>
+                </section>
+
+                {/* LAPISAN 2 (z-20): RUANG PENGAJUAN NASKAH (STACKING CARD + DYNAMIC BG) */}
+                <section className="relative sm:sticky sm:top-20 z-20 w-full sm:min-h-[calc(100vh-5rem)] bg-neutral-900 text-[#ffffff] border-t border-[#e1e1e1] shadow-[0_-24px_60px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col justify-center">
+                  <div className="absolute inset-0 z-0 pointer-events-none select-none">
+                    {Object.entries(DOMAIN_CARD_BACKGROUNDS).map(([key, bgItem]) => {
+                      const isBgActive = activeDomainBg === key;
+                      return (
+                        <img
+                          key={key}
+                          src={bgItem.src}
+                          alt={bgItem.alt}
+                          onError={(e) => {
+                            if (bgItem.fallbackUrl && e.currentTarget.src !== bgItem.fallbackUrl) {
+                              e.currentTarget.src = bgItem.fallbackUrl;
+                            }
+                          }}
+                          className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 ease-out ${isBgActive ? "opacity-100 scale-100" : "opacity-0 scale-105"}`}
+                        />
+                      );
+                    })}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/65 to-black/80 backdrop-blur-[1px]" />
+                  </div>
+
+                  <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-10 lg:py-16">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 lg:mb-10 gap-4">
+                      <div>
+                        <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#ffffff] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                          {isEn ? "Enter the Manuscript Submission Portal" : "Masuk ke Ruang Pengajuan Naskah"}
+                        </h2>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 lg:gap-8">
+                      {/* Kartu 01: ILMU KELAUTAN */}
+                      {(() => {
+                        const isSelected = activeDomainBg === "kelautan";
+                        const cardBg = DOMAIN_CARD_BACKGROUNDS.kelautan;
+                        return (
+                          <div
+                            onClick={() => {
+                              if (isSelected) {
+                                handleNavigate("kelautan");
+                              } else {
+                                setActiveDomainBg("kelautan");
+                              }
+                            }}
+                            className={`group relative overflow-hidden p-6 sm:p-8 lg:p-10 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[260px] sm:min-h-[290px] lg:min-h-[350px] ${
+                              isSelected ? "border-2 border-[#38bdf8] shadow-[0_12px_36px_rgba(6,147,227,0.35)]" : "border border-[#ffffff]/25 hover:border-[#38bdf8]"
+                            }`}
+                          >
+                            <div className="absolute inset-0 z-0 pointer-events-none select-none">
+                              <img
+                                src={cardBg.src}
+                                alt={cardBg.alt}
+                                onError={(e) => {
+                                  if (cardBg.fallbackUrl && e.currentTarget.src !== cardBg.fallbackUrl) {
+                                    e.currentTarget.src = cardBg.fallbackUrl;
+                                  }
+                                }}
+                                className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                              />
+                              <div
+                                className={`absolute inset-0 transition-colors duration-300 ${
+                                  isSelected
+                                    ? "bg-gradient-to-t from-[#004b8e]/90 via-[#004b8e]/65 to-black/40"
+                                    : "bg-gradient-to-t from-black/90 via-black/65 to-black/45 group-hover:from-[#004b8e]/90 group-hover:via-[#004b8e]/70 group-hover:to-black/45"
+                                }`}
+                              />
+                            </div>
+
+                            <div className="relative z-10">
+                              <div className="flex items-center justify-between mb-6 sm:mb-8">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[#38bdf8] group-hover:text-[#ffffff] transition-colors">01</span>
+                                </div>
+                                <div className="w-11 h-11 sm:w-12 sm:h-12 bg-black/45 backdrop-blur-xs text-[#38bdf8] border border-[#ffffff]/25 flex items-center justify-center group-hover:bg-[#0693e3] group-hover:text-[#ffffff] group-hover:border-[#0693e3] transition-colors">
+                                  <WavesIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </div>
+                              </div>
+
+                              <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#ffffff] mb-3 sm:mb-4">{isEn ? "Marine Science Field" : "Bidang Ilmu Kelautan"}</h3>
+                              <p className="text-[#e2e8f0] text-sm sm:text-base leading-relaxed mb-6">
+                                {isEn
+                                  ? "Covers 3 main research focus areas: Hydro-Oceanography, Coastal & Marine Ecosystem Conservation, and Marine Biotechnology."
+                                  : "Mencakup 3 fokus bidang kajian utama: Hidro-Oseanografi, Konservasi Ekosistem Pesisir & Laut, serta Bioteknologi Kelautan."}
+                              </p>
+                            </div>
+
+                            <div className="relative z-10 pt-5 sm:pt-6 border-t border-[#ffffff]/20 flex items-center justify-between gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDomainBg("kelautan");
+                                  handleNavigate("kelautan");
+                                }}
+                                className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#38bdf8] group-hover:text-[#ffffff] hover:underline text-left cursor-pointer"
+                              >
+                                {isEn ? (isSelected ? "Enter Marine Science Field" : "Select Marine Science Research Field") : isSelected ? "Masuk ke Bidang Ilmu Kelautan" : "Pilih Bidang Kajian Ilmu Kelautan"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDomainBg("kelautan");
+                                  handleNavigate("kelautan");
+                                }}
+                                aria-label={isEn ? "Enter Marine Science Field" : "Masuk ke Bidang Ilmu Kelautan"}
+                                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#0693e3] hover:bg-[#ffffff] text-[#ffffff] hover:text-[#004b8e] flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-all cursor-pointer"
+                              >
+                                <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Kartu 02: PERIKANAN */}
+                      {(() => {
+                        const isSelected = activeDomainBg === "perikanan";
+                        const cardBg = DOMAIN_CARD_BACKGROUNDS.perikanan;
+                        return (
+                          <div
+                            onClick={() => {
+                              if (isSelected) {
+                                handleNavigate("perikanan");
+                              } else {
+                                setActiveDomainBg("perikanan");
+                              }
+                            }}
+                            className={`group relative overflow-hidden p-6 sm:p-8 lg:p-10 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[260px] sm:min-h-[290px] lg:min-h-[350px] ${
+                              isSelected ? "border-2 border-[#38bdf8] shadow-[0_12px_36px_rgba(6,147,227,0.35)]" : "border border-[#ffffff]/25 hover:border-[#38bdf8]"
+                            }`}
+                          >
+                            <div className="absolute inset-0 z-0 pointer-events-none select-none">
+                              <img
+                                src={cardBg.src}
+                                alt={cardBg.alt}
+                                onError={(e) => {
+                                  if (cardBg.fallbackUrl && e.currentTarget.src !== cardBg.fallbackUrl) {
+                                    e.currentTarget.src = cardBg.fallbackUrl;
+                                  }
+                                }}
+                                className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                              />
+                              <div
+                                className={`absolute inset-0 transition-colors duration-300 ${
+                                  isSelected
+                                    ? "bg-gradient-to-t from-[#004b8e]/90 via-[#004b8e]/65 to-black/40"
+                                    : "bg-gradient-to-t from-black/90 via-black/65 to-black/45 group-hover:from-[#004b8e]/90 group-hover:via-[#004b8e]/70 group-hover:to-black/45"
+                                }`}
+                              />
+                            </div>
+
+                            <div className="relative z-10">
+                              <div className="flex items-center justify-between mb-6 sm:mb-8">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[#38bdf8] group-hover:text-[#ffffff] transition-colors">02</span>
+                                </div>
+                                <div className="w-11 h-11 sm:w-12 sm:h-12 bg-black/45 backdrop-blur-xs text-[#38bdf8] border border-[#ffffff]/25 flex items-center justify-center group-hover:bg-[#0693e3] group-hover:text-[#ffffff] group-hover:border-[#0693e3] transition-colors">
+                                  <FishIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </div>
+                              </div>
+
+                              <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#ffffff] mb-3 sm:mb-4">{isEn ? "Fisheries Field" : "Bidang Perikanan"}</h3>
+                              <p className="text-[#e2e8f0] text-sm sm:text-base leading-relaxed mb-6">
+                                {isEn
+                                  ? "Covers 4 main research focus areas: Aquatic Resources, Aquaculture, Fisheries Product Technology, and Fisheries Socio-Economics."
+                                  : "Mencakup 4 fokus bidang kajian utama: Sumber Daya Perairan, Budidaya Perikanan, Teknologi Hasil Perikanan, serta Sosial Ekonomi Perikanan."}
+                              </p>
+                            </div>
+
+                            <div className="relative z-10 pt-5 sm:pt-6 border-t border-[#ffffff]/20 flex items-center justify-between gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDomainBg("perikanan");
+                                  handleNavigate("perikanan");
+                                }}
+                                className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#38bdf8] group-hover:text-[#ffffff] hover:underline text-left cursor-pointer"
+                              >
+                                {isEn ? (isSelected ? "Enter Fisheries Field" : "Select Fisheries Research Field") : isSelected ? "Masuk ke Bidang Perikanan" : "Pilih Bidang Kajian Perikanan"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDomainBg("perikanan");
+                                  handleNavigate("perikanan");
+                                }}
+                                aria-label={isEn ? "Enter Fisheries Field" : "Masuk ke Bidang Perikanan"}
+                                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#0693e3] hover:bg-[#ffffff] text-[#ffffff] hover:text-[#004b8e] flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-all cursor-pointer"
+                              >
+                                <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </section>
+
+                {/* LAPISAN 3 (z-30): MEKANISME LAYANAN (TOP STACKING CARD) */}
+                <section className="relative z-30 w-full sm:min-h-[calc(100vh-5rem)] bg-[#f6f6f6] border-t border-[#e1e1e1] shadow-[0_-24px_60px_rgba(0,0,0,0.16)] flex flex-col justify-center">
+                  <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 lg:py-20">
+                    <div className="mb-8 sm:mb-10">
+                      <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#000000]">{isEn ? "Integrated Service Mechanism" : "Mekanisme Layanan Terintegrasi"}</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+                      {[
+                        {
+                          step: "01",
+                          title: isEn ? "Select Research Field" : "Pilih Bidang Kajian",
+                          desc: isEn
+                            ? "Choose either Marine Science or Fisheries, then select the specific research field that matches your study topic."
+                            : "Pilih rumpun Ilmu Kelautan atau Perikanan, lalu tentukan fokus bidang kajian yang sesuai dengan topik penelitian Anda.",
+                        },
+                        {
+                          step: "02",
+                          title: isEn ? "Submit Manuscript" : "Submit Jurnal",
+                          desc: isEn ? "Fill in author details and upload your manuscript document in PDF format." : "Isi identitas penulis dan unggah dokumen manuskrip dalam format PDF.",
+                        },
+                        {
+                          step: "03",
+                          title: isEn ? "Enter Review Queue" : "Masuk ke Antrean Review",
+                          desc: isEn
+                            ? "Your manuscript is automatically registered in the queue system and assigned a tracking code for regular monitoring."
+                            : "Manuskrip otomatis terdaftar dalam sistem antrean dan mendapatkan kode pelacakan untuk dipantau secara berkala.",
+                        },
+                        {
+                          step: "04",
+                          title: isEn ? "Peer Review by Experts" : "Manuskrip Direview oleh Reviewer",
+                          desc: isEn
+                            ? "Our reviewer team evaluates the substance, methodology, and academic writing according to their field of expertise."
+                            : "Tim reviewer menelaah substansi, metodologi, serta tata tulis manuskrip sesuai dengan bidang kepakaran.",
+                        },
+                        {
+                          step: "05",
+                          title: isEn ? "Feedback & Recommendations via Email" : "Feedback & Rekomendasi via Email",
+                          desc: isEn
+                            ? "Correction notes, the reviewed PDF manuscript, and a curated list of recommended journals are sent directly to the author's email."
+                            : "Hasil koreksi beserta file PDF manuskrip yang telah direview dan daftar rekomendasi jurnal dikirimkan langsung ke email penulis.",
+                        },
+                        {
+                          step: "06",
+                          title: isEn ? "Submit to Recommended Journals" : "Submit Manuskrip ke Jurnal Rekomendasi",
+                          desc: isEn
+                            ? "Authors refine their paper based on reviewer feedback and submit the manuscript to the recommended target journals."
+                            : "Penulis menyempurnakan naskah berdasarkan masukan reviewer dan mengajukan manuskrip ke jurnal tujuan yang direkomendasikan.",
+                        },
+                      ].map((item) => (
+                        <div key={item.step} className="bg-[#ffffff] border border-[#e1e1e1] hover:border-[#004b8e] transition-colors p-5 sm:p-6 flex flex-col justify-between">
+                          <div>
+                            <span className="font-display text-2xl sm:text-3xl font-bold text-[#0693e3] block mb-3">{item.step}</span>
+                            <h4 className="font-display text-base sm:text-lg font-bold text-[#000000] mb-2">{item.title}</h4>
+                            <p className="text-xs sm:text-sm text-[#666666] leading-relaxed">{item.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              </main>
+            )}
+
+            {/* =====================================================================
+              VIEW 2: HALAMAN PILIHAN BIDANG KAJIAN
+             ===================================================================== */}
+            {(activeView === "kelautan" || activeView === "perikanan") &&
+              (() => {
+                const showcaseData = SUB_DOMAIN_SHOWCASE[activeView];
+                const items = showcaseData.items;
+                const displayDomainLabel = isEn ? showcaseData.domainLabelEn : showcaseData.domainLabel;
+
+                return (
+                  <main key={`showcase-${activeView}`} className="flex-1 relative bg-neutral-900 text-[#ffffff] animate-page-enter">
+                    <div className="sticky top-16 sm:top-20 z-30 bg-[#004b8e] text-[#ffffff] border-b border-[#ffffff]/15 shadow-sm">
+                      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-row items-center justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 text-xs font-semibold text-[#dfdfdf] mb-1.5">
+                            <button type="button" onClick={() => handleNavigate("home")} className="hover:text-[#ffffff] underline cursor-pointer">
+                              {isEn ? "Home" : "Beranda"}
+                            </button>
+                            <span className="text-[#dfdfdf]/60">/</span>
+                            <span className="text-[#38bdf8] font-bold">{isEn ? `${displayDomainLabel} Field` : `Bidang ${displayDomainLabel}`}</span>
+                          </div>
+                          <h1 className="font-display text-xl sm:text-3xl lg:text-4xl font-bold text-[#ffffff]">
+                            {isEn ? (
+                              <>
+                                <span className="text-[#38bdf8]">{displayDomainLabel}</span> Research Fields
+                              </>
+                            ) : (
+                              <>
+                                Bidang Kajian <span className="text-[#38bdf8]">{displayDomainLabel}</span>
+                              </>
+                            )}
+                          </h1>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleNavigate("home")}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0693e3] hover:bg-[#ffffff] text-[#ffffff] hover:text-[#004b8e] text-xs font-display font-bold uppercase tracking-wider transition-colors shrink-0 cursor-pointer"
+                        >
+                          <span>←</span>
+                          <span>{isEn ? "Back" : "Kembali"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      {items.map((item, idx) => (
+                        <StudyShowcaseSection key={item.id} item={item} idx={idx} totalItems={items.length} domainLabel={displayDomainLabel} lang={lang} onSelectField={(fieldTitle) => handleOpenSubmitForm(activeView, fieldTitle)} />
+                      ))}
+                    </div>
+                  </main>
+                );
+              })()}
+
+            {/* =====================================================================
+              VIEW 3: HALAMAN FORMULIR PENGAJUAN MANUSKRIP (TERHUBUNG LIVE KE DRIVE)
+             ===================================================================== */}
+            {activeView === "submit" &&
+              (() => {
+                const activeStudyFieldObj = SUB_DOMAIN_SHOWCASE[submitDomain].items.find((item) => item.title === selectedStudyField) || SUB_DOMAIN_SHOWCASE[submitDomain].items[0];
+                const displaySelectedField = translateField(selectedStudyField, lang);
+
+                return (
+                  <main key={`view-submit-${submitDomain}-${selectedStudyField}`} className="flex-1 relative bg-neutral-900 animate-page-enter">
+                    <div className="fixed inset-0 z-0 pointer-events-none select-none">
+                      <img
+                        src={activeStudyFieldObj.src}
+                        alt={`${currentDomainLabel} - ${displaySelectedField}`}
+                        onError={(e) => {
+                          if (activeStudyFieldObj.fallbackUrl && e.currentTarget.src !== activeStudyFieldObj.fallbackUrl) {
+                            e.currentTarget.src = activeStudyFieldObj.fallbackUrl;
+                          }
+                        }}
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px]" />
+                    </div>
+
+                    <div className="sticky top-16 sm:top-20 z-30 bg-[#004b8e] text-[#ffffff] border-b border-[#ffffff]/15 shadow-sm">
+                      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-row items-center justify-between gap-4">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#dfdfdf] mb-1.5">
+                            <button type="button" onClick={() => handleNavigate("home")} className="hover:text-[#ffffff] underline cursor-pointer">
+                              {isEn ? "Home" : "Beranda"}
+                            </button>
+                            <span className="text-[#dfdfdf]/60">/</span>
+                            <button type="button" onClick={() => handleNavigate(submitDomain)} className="hover:text-[#ffffff] underline cursor-pointer">
+                              {currentDomainLabel}
+                            </button>
+                            <span className="text-[#dfdfdf]/60">/</span>
+                            <span className="text-[#38bdf8] font-bold">{displaySelectedField}</span>
+                          </div>
+                          <h1 className="font-display text-xl sm:text-3xl lg:text-4xl font-bold text-[#ffffff] tracking-tight">
+                            {isEn ? (
+                              <>
+                                <span className="text-[#38bdf8]">{currentDomainLabel}</span> Manuscript Submission
+                              </>
+                            ) : (
+                              <>
+                                Manuskrip Bidang <span className="text-[#38bdf8]">{currentDomainLabel}</span>
+                              </>
+                            )}
+                          </h1>
+                          <div className="mt-2 inline-flex items-center">
+                            <span className="px-3 py-1 bg-[#0693e3] text-[#ffffff] text-xs font-display font-bold uppercase tracking-wider">{isEn ? `Field: ${displaySelectedField}` : `Kajian: ${displaySelectedField}`}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleNavigate(submitDomain)}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0693e3] hover:bg-[#ffffff] text-[#ffffff] hover:text-[#004b8e] text-xs font-display font-bold uppercase tracking-wider transition-colors shrink-0 cursor-pointer"
+                        >
+                          <span>←</span>
+                          <span>{isEn ? "Back" : "Kembali"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+                      {submitReceipt && (
+                        <div className="bg-[#004b8e] text-[#ffffff] p-5 sm:p-8 border border-[#004b8e] shadow-xl">
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <CheckCircleIcon className="w-6 h-6 sm:w-7 sm:h-7 text-[#0693e3] shrink-0 mt-0.5" />
+                            <div className="space-y-3 flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-bold uppercase tracking-widest text-[#dfdfdf]">{isEn ? "Submission Successfully Added to Queue" : "Pengajuan Berhasil Masuk Antrean"}</span>
+                                <span className="px-2.5 py-0.5 bg-[#0693e3] text-[#ffffff] text-xs font-bold">{isEn ? `Queue Position #${submitReceipt.queueNumber}` : `Urutan Antrean #${submitReceipt.queueNumber}`}</span>
+                              </div>
+                              <h3 className="font-display text-xl sm:text-2xl font-bold break-words">{isEn ? `Your Tracking Code: ${submitReceipt.id}` : `Kode Pelacakan Anda: ${submitReceipt.id}`}</h3>
+                              <p className="text-xs sm:text-sm text-[#dfdfdf] leading-relaxed">
+                                {isEn ? (
+                                  <>
+                                    The manuscript by <strong>{submitReceipt.authorName}</strong> (Field:{" "}
+                                    <strong>
+                                      {translateDomain(submitReceipt.domain, lang)} — {translateField(submitReceipt.studyField, lang)}
+                                    </strong>
+                                    ) has been saved to Google Drive (<strong>{submitReceipt.monthFolder}</strong>) and added to the review queue. A confirmation receipt has been emailed to{" "}
+                                    <strong className="break-all">{submitReceipt.authorEmail}</strong>.
+                                  </>
+                                ) : (
+                                  <>
+                                    Naskah atas nama <strong>{submitReceipt.authorName}</strong> (Bidang{" "}
+                                    <strong>
+                                      {submitReceipt.domain} — {submitReceipt.studyField}
+                                    </strong>
+                                    ) telah tersimpan di Google Drive (<strong>{submitReceipt.monthFolder}</strong>) dan masuk ke antrean review. Tanda terima otomatis telah dikirimkan ke email{" "}
+                                    <strong className="break-all">{submitReceipt.authorEmail}</strong>.
+                                  </>
+                                )}
+                              </p>
+                              <div className="pt-2 flex flex-wrap gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => handleNavigate("tracker")}
+                                  className="px-4 py-2 bg-[#0693e3] text-[#ffffff] text-xs font-bold uppercase tracking-wider hover:bg-[#ffffff] hover:text-[#004b8e] transition-colors cursor-pointer"
+                                >
+                                  {isEn ? "View in Tracker Page" : "Lihat di Halaman Tracker"}
+                                </button>
+                                <button type="button" onClick={() => setSubmitReceipt(null)} className="px-4 py-2 bg-[#ffffff] text-[#004b8e] text-xs font-bold uppercase tracking-wider hover:bg-[#dfdfdf] transition-colors cursor-pointer">
+                                  {isEn ? "Submit Another Manuscript" : "Ajukan Naskah Lainnya"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="bg-[#ffffff]/95 backdrop-blur-md border border-[#e1e1e1] p-5 sm:p-8 lg:p-10 shadow-2xl relative">
+                        <div className="mb-6 sm:mb-8 pb-5 sm:pb-6 border-b border-[#e1e1e1]">
+                          <h3 className="font-display text-xl sm:text-2xl font-bold text-[#000000] mb-2">{isEn ? `${currentDomainLabel} Manuscript Upload Form` : `Formulir Unggah Manuskrip ${currentDomainLabel}`}</h3>
+                          <p className="text-xs sm:text-sm text-[#666666]">
+                            {isEn ? (
+                              <>
+                                Please ensure your manuscript file is in <strong>PDF</strong> format (maximum <strong>5 MB</strong>) before uploading.
+                              </>
+                            ) : (
+                              <>
+                                Pastikan file naskah sudah dalam format <strong>PDF</strong> (maksimal <strong>5 MB</strong>) sebelum diunggah.
+                              </>
+                            )}
+                          </p>
+                        </div>
+
+                        {formError && (
+                          <div className="mb-6 p-4 bg-[#f2552c]/10 border border-[#f2552c] text-[#f2552c] text-xs sm:text-sm flex items-start gap-3">
+                            <AlertCircleIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                            <span>{formError}</span>
+                          </div>
+                        )}
+
+                        <form onSubmit={handleManuscriptSubmit} className="space-y-5 sm:space-y-6">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#353535] mb-2">{isEn ? "Selected Research Field *" : "Bidang Kajian Terpilih *"}</label>
+                            <div className="w-full px-4 py-3 bg-[#f6f6f6] border border-[#004b8e]/30 text-sm font-bold text-[#004b8e] flex items-center justify-between gap-2 select-none">
+                              <span>
+                                {currentDomainLabel} — {displaySelectedField}
+                              </span>
+                              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#004b8e] text-[#ffffff]">{isEn ? "Selected" : "Terpilih"}</span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#353535] mb-2">{isEn ? "Author's Full Name & Academic Title *" : "Nama Lengkap & Gelar Penulis *"}</label>
+                            <input
+                              type="text"
+                              disabled={isSubmitting}
+                              value={authorName}
+                              onChange={(e) => setAuthorName(e.target.value)}
+                              placeholder={isEn ? "Example: Buntora Pasaribu, Ph.D." : "Contoh: Buntora Pasaribu, Ph.D."}
+                              className="w-full px-4 py-3 bg-[#f9f9f9] border border-[#e1e1e1] focus:border-[#004b8e] focus:bg-[#ffffff] outline-none text-sm text-[#000000] disabled:opacity-60"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#353535] mb-2">{isEn ? "Institution / Affiliation" : "Institusi / Afiliasi"}</label>
+                            <input
+                              type="text"
+                              disabled={isSubmitting}
+                              value={affiliation}
+                              onChange={(e) => setAffiliation(e.target.value)}
+                              placeholder={isEn ? "University / Research Institution Name" : "Nama Universitas / Lembaga Riset"}
+                              className="w-full px-4 py-3 bg-[#f9f9f9] border border-[#e1e1e1] focus:border-[#004b8e] focus:bg-[#ffffff] outline-none text-sm text-[#000000] disabled:opacity-60"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#353535] mb-2">{isEn ? "Full Manuscript Title *" : "Judul Lengkap Manuskrip *"}</label>
+                            <input
+                              type="text"
+                              disabled={isSubmitting}
+                              value={manuscriptTitle}
+                              onChange={(e) => setManuscriptTitle(e.target.value)}
+                              placeholder={isEn ? `Enter manuscript title for ${displaySelectedField.toLowerCase()}...` : `Masukkan judul manuskrip kajian ${selectedStudyField.toLowerCase()}...`}
+                              className="w-full px-4 py-3 bg-[#f9f9f9] border border-[#e1e1e1] focus:border-[#004b8e] focus:bg-[#ffffff] outline-none text-sm text-[#000000] disabled:opacity-60"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#353535] mb-2">{isEn ? "Author Email (Review Recipient) *" : "Email Penulis (Penerima Hasil Review) *"}</label>
+                            <input
+                              type="email"
+                              disabled={isSubmitting}
+                              value={authorEmail}
+                              onChange={(e) => setAuthorEmail(e.target.value)}
+                              placeholder={isEn ? "example: author@institution.ac.id" : "contoh: penulis@institusi.ac.id"}
+                              className="w-full px-4 py-3 bg-[#f9f9f9] border border-[#e1e1e1] focus:border-[#004b8e] focus:bg-[#ffffff] outline-none text-sm text-[#000000] disabled:opacity-60"
+                            />
+                            <p className="text-[11px] text-[#666666] mt-1.5">
+                              {isEn ? "The reviewed PDF file and recommended journal list will be sent to this email address." : "File PDF hasil koreksi dan daftar jurnal rekomendasi akan dikirimkan ke alamat email ini."}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-[#353535] mb-2">
+                              {isEn ? "Upload Manuscript Document (PDF Required, Max. 5 MB) *" : "Unggah Dokumen Manuskrip (Wajib PDF, Maks. 5 MB) *"}
+                            </label>
+                            <div
+                              onClick={() => !isSubmitting && fileInputRef.current && fileInputRef.current.click()}
+                              className={`border-2 border-dashed p-6 sm:p-8 text-center transition-colors ${isSubmitting ? "opacity-60 cursor-not-allowed" : "cursor-pointer"} ${
+                                pdfFile ? "border-[#0693e3] bg-[#0693e3]/5" : "border-[#767676] bg-[#f9f9f9] hover:border-[#004b8e]"
+                              }`}
+                            >
+                              <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" disabled={isSubmitting} onChange={handlePdfSelect} className="hidden" />
+                              <UploadIcon className="w-7 h-7 sm:w-8 sm:h-8 text-[#004b8e] mx-auto mb-3" />
+                              {pdfFile ? (
+                                <div>
+                                  <p className="text-xs sm:text-sm font-bold text-[#004b8e] break-all">{pdfFile.name}</p>
+                                  <p className="text-xs text-[#666666] mt-1">
+                                    {(pdfFile.size / (1024 * 1024)).toFixed(2)} MB • {isEn ? "Ready to upload to Google Drive" : "Siap dikirim ke Google Drive"}
+                                  </p>
+                                </div>
+                              ) : (
+                                <div>
+                                  <p className="text-xs sm:text-sm font-semibold text-[#000000]">{isEn ? "Click to select a PDF file from your device" : "Klik untuk memilih file PDF dari perangkat Anda"}</p>
+                                  <p className="text-xs text-[#666666] mt-1">{isEn ? "Supports .pdf format only (maximum 5 MB)" : "Hanya mendukung format .pdf (maksimal 5 MB)"}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full py-3.5 sm:py-4 font-display font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors flex items-center justify-center gap-2 bg-[#0693e3] hover:bg-[#004b8e] disabled:bg-[#94a3b8] text-[#ffffff] cursor-pointer disabled:cursor-wait"
+                          >
+                            <SendIcon className="w-4 h-4" />
+                            <span>{isSubmitting ? (isEn ? "Uploading PDF & Sending Notification..." : "Mengunggah PDF ke Drive & Mengirim Notifikasi...") : isEn ? "Submit Manuscript to Queue" : "Kirim Manuskrip ke Antrean"}</span>
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </main>
+                );
+              })()}
+
+            {/* =====================================================================
+              VIEW 4: HALAMAN KHUSUS TRACKER (LIVE DATA DARI GOOGLE SHEETS)
+             ===================================================================== */}
+            {activeView === "tracker" &&
+              (() => {
+                const activeTrackerDomainCanonical = trackerDomain === "kelautan" ? "Ilmu Kelautan" : "Perikanan";
+                const activeTrackerDomainLabel = translateDomain(activeTrackerDomainCanonical, lang);
+                const studyCategories = SUB_DOMAIN_SHOWCASE[trackerDomain].items;
+
+                const handleExecuteGlobalSearch = (e) => {
+                  if (e) e.preventDefault();
+                  if (!trackerSearchInput.trim()) {
+                    setShowGlobalSearchResults(false);
+                    return;
+                  }
+                  setShowGlobalSearchResults(true);
+                  if (globalTrackerSearchResults.length === 1) {
+                    handleSelectTrackedManuscript(globalTrackerSearchResults[0]);
+                  }
+                };
+
+                return (
+                  <main key="view-tracker" className="flex-1 bg-[#ffffff] animate-page-enter">
+                    <div className="sticky top-16 sm:top-20 z-30 bg-[#004b8e] text-[#ffffff] border-b border-[#ffffff]/15 shadow-xs">
+                      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex items-center justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#dfdfdf] mb-0.5">
+                            <button type="button" onClick={() => handleNavigate("home")} className="hover:text-[#ffffff] underline cursor-pointer">
+                              {isEn ? "Home" : "Beranda"}
+                            </button>
+                            <span className="text-[#dfdfdf]/60">/</span>
+                            <span className="text-[#38bdf8] font-bold">{isEn ? "Queue Tracker" : "Tracker Antrean"}</span>
+                          </div>
+                          <h1 className="font-display text-lg sm:text-xl lg:text-2xl font-bold text-[#ffffff] tracking-tight leading-tight">
+                            {isEn ? (
+                              <>
+                                Manuscript <span className="text-[#38bdf8]">Queue Tracker</span>
+                              </>
+                            ) : (
+                              <>
+                                Tracker <span className="text-[#38bdf8]">Antrean Manuskrip</span>
+                              </>
+                            )}
+                          </h1>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleNavigate("home")}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0693e3] hover:bg-[#ffffff] text-[#ffffff] hover:text-[#004b8e] text-xs font-display font-bold uppercase tracking-wider transition-colors shrink-0 cursor-pointer"
+                        >
+                          <span>←</span>
+                          <span>{isEn ? "Back" : "Kembali"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#ffffff] border-b border-[#e1e1e1]">
+                      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col items-center justify-center gap-3">
+                        <div className="inline-flex bg-[#f6f6f6] border border-[#e1e1e1] p-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTrackerDomain("kelautan");
+                              setSelectedTrackerField(null);
+                              setSelectedTrackerId(null);
+                            }}
+                            className={`px-5 sm:px-7 py-2 text-xs sm:text-sm font-display font-bold uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer ${
+                              trackerDomain === "kelautan" ? "bg-[#004b8e] text-[#ffffff]" : "text-[#666666] hover:text-[#000000]"
+                            }`}
+                          >
+                            <WavesIcon className="w-4 h-4" />
+                            <span>{isEn ? "Marine Science" : "Ilmu Kelautan"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTrackerDomain("perikanan");
+                              setSelectedTrackerField(null);
+                              setSelectedTrackerId(null);
+                            }}
+                            className={`px-5 sm:px-7 py-2 text-xs sm:text-sm font-display font-bold uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer ${
+                              trackerDomain === "perikanan" ? "bg-[#004b8e] text-[#ffffff]" : "text-[#666666] hover:text-[#000000]"
+                            }`}
+                          >
+                            <FishIcon className="w-4 h-4" />
+                            <span>{isEn ? "Fisheries" : "Perikanan"}</span>
+                          </button>
+                        </div>
+
+                        <form onSubmit={handleExecuteGlobalSearch} className="w-full max-w-2xl relative">
+                          <div className="flex items-stretch gap-2">
+                            <input
+                              type="text"
+                              value={trackerSearchInput}
+                              onChange={(e) => {
+                                setTrackerSearchInput(e.target.value);
+                                setShowGlobalSearchResults(e.target.value.trim().length > 0);
+                              }}
+                              placeholder={isEn ? "Search code (AQM-2026-1101), author name, research field, or department..." : "Cari kode (AQM-2026-1101), nama penulis, bidang kajian, atau jurusan..."}
+                              className="flex-1 min-w-0 px-3.5 py-2.5 bg-[#f9f9f9] border border-[#e1e1e1] focus:border-[#004b8e] focus:bg-[#ffffff] outline-none text-xs sm:text-sm text-[#000000]"
+                            />
+                            <button
+                              type="submit"
+                              className="px-4 sm:px-5 py-2.5 bg-[#0693e3] hover:bg-[#004b8e] text-[#ffffff] text-xs font-display font-bold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                            >
+                              <SearchIcon className="w-4 h-4" />
+                              <span>{isEn ? "Search" : "Cari"}</span>
+                            </button>
+                          </div>
+
+                          {showGlobalSearchResults && trackerSearchInput.trim() !== "" && (
+                            <div className="mt-2 bg-[#ffffff] border border-[#004b8e] shadow-lg p-3 space-y-2">
+                              <div className="flex items-center justify-between text-[11px] font-bold text-[#666666] pb-1.5 border-b border-[#e1e1e1]">
+                                <span>{isEn ? `Search Results Across All Departments & Categories (${globalTrackerSearchResults.length})` : `Hasil Pencarian Semua Jurusan & Kategori (${globalTrackerSearchResults.length})`}</span>
+                                <button type="button" onClick={() => setShowGlobalSearchResults(false)} className="text-[#f2552c] hover:underline cursor-pointer">
+                                  {isEn ? "Close ✕" : "Tutup ✕"}
+                                </button>
+                              </div>
+
+                              {globalTrackerSearchResults.length === 0 ? (
+                                <p className="text-xs text-[#666666] py-2">{isEn ? "No matching manuscripts found across all departments and categories." : "Tidak ditemukan manuskrip yang cocok di seluruh jurusan dan kategori."}</p>
+                              ) : (
+                                <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                                  {globalTrackerSearchResults.map((item) => {
+                                    const queueIdx = activeQueueList.findIndex((q) => q.id === item.id);
+                                    return (
+                                      <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => handleSelectTrackedManuscript(item)}
+                                        className="w-full text-left p-2.5 bg-[#f9f9f9] hover:bg-[#004b8e] text-[#000000] hover:text-[#ffffff] border border-[#e1e1e1] transition-colors flex items-center justify-between gap-2 cursor-pointer group"
+                                      >
+                                        <div className="min-w-0">
+                                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+                                            <span className="text-[#004b8e] group-hover:text-[#38bdf8]">
+                                              {queueIdx !== -1 ? (isEn ? `Queue #${queueIdx + 1}` : `Antrean #${queueIdx + 1}`) : isEn ? "Completed" : "Selesai"} • {item.id}
+                                            </span>
+                                            <span className="px-1.5 py-0.5 bg-[#ffffff] group-hover:bg-[#ffffff]/15 text-[#333333] group-hover:text-[#ffffff]">
+                                              {translateDomain(item.domain, lang)} — {translateField(item.studyField, lang)}
+                                            </span>
+                                          </div>
+                                          <p className="font-display font-bold text-xs sm:text-sm truncate mt-0.5">{item.authorName}</p>
+                                        </div>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 bg-[#0693e3]/15 text-[#004b8e] group-hover:bg-[#0693e3] group-hover:text-[#ffffff] shrink-0">{translateStatus(item.status, lang)}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </form>
+                      </div>
+                    </div>
+
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                      <div className="lg:col-span-5 space-y-3">
+                        <div className="bg-[#004b8e] text-[#ffffff] border border-[#004b8e] p-4 sm:p-6 shadow-sm">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <h2 className="font-display text-base sm:text-lg font-bold text-[#ffffff]">{isEn ? `${activeTrackerDomainLabel} Research Fields` : `Bidang Kajian ${activeTrackerDomainLabel}`}</h2>
+                            <span className="px-2.5 py-0.5 bg-[#0693e3] text-[#ffffff] text-[11px] font-bold">{isLoadingData ? (isEn ? "Syncing..." : "Memuat...") : `${studyCategories.length} ${isEn ? "Categories" : "Kategori"}`}</span>
+                          </div>
+                          <p className="text-xs text-[#dfdfdf] mb-4">
+                            {isEn ? "Select a research field category below to view the manuscripts grouped within it." : "Pilih kategori bidang kajian di bawah untuk melihat daftar manuskrip yang dikelompokkan di dalamnya."}
+                          </p>
+
+                          <div className="space-y-2.5">
+                            {studyCategories.map((category, idx) => {
+                              const isCategoryOpen = selectedTrackerField === category.title;
+                              const displayCatTitle = isEn && category.titleEn ? category.titleEn : category.title;
+                              const groupedManuscripts = manuscripts.filter((m) => m.domain === activeTrackerDomainCanonical && (m.studyField || "").toLowerCase() === category.title.toLowerCase());
+
+                              return (
+                                <div key={category.id} className="border border-[#ffffff]/20 overflow-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedTrackerField(isCategoryOpen ? null : category.title);
+                                      setSelectedTrackerId(null);
+                                    }}
+                                    className={`w-full text-left p-3.5 transition-colors flex items-center justify-between gap-3 cursor-pointer ${
+                                      isCategoryOpen ? "bg-[#0693e3] text-[#ffffff]" : "bg-[#ffffff]/10 hover:bg-[#ffffff]/18 text-[#ffffff]"
+                                    }`}
+                                  >
+                                    <div className="min-w-0">
+                                      <span className={`text-[10px] font-display font-bold uppercase tracking-widest block ${isCategoryOpen ? "text-[#ffffff]/90" : "text-[#38bdf8]"}`}>
+                                        0{idx + 1} • {activeTrackerDomainLabel}
+                                      </span>
+                                      <span className="font-display font-bold text-sm sm:text-base block truncate">{displayCatTitle}</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className={`px-2 py-0.5 text-[11px] font-bold ${isCategoryOpen ? "bg-[#004b8e] text-[#ffffff]" : "bg-[#ffffff]/15 text-[#ffffff] border border-[#ffffff]/25"}`}>
+                                        {isLoadingData ? "..." : groupedManuscripts.length} {isEn ? "Papers" : "Naskah"}
+                                      </span>
+                                      <span className="text-xs font-bold">{isCategoryOpen ? "▲" : "▼"}</span>
+                                    </div>
+                                  </button>
+
+                                  {isCategoryOpen && (
+                                    <div className="p-3.5 bg-[#ffffff] text-[#333333] border-t border-[#e1e1e1] space-y-2">
+                                      {groupedManuscripts.length === 0 ? (
+                                        <p className="text-xs text-[#666666] py-2 px-1">{isEn ? `No manuscripts submitted yet under ${displayCatTitle}.` : `Belum ada manuskrip pada bidang kajian ${category.title}.`}</p>
+                                      ) : (
+                                        groupedManuscripts.map((item) => {
+                                          const queueIdx = activeQueueList.findIndex((q) => q.id === item.id);
+                                          const isItemSelected = selectedTrackerId === item.id;
+                                          return (
+                                            <button
+                                              key={item.id}
+                                              type="button"
+                                              onClick={() => setSelectedTrackerId(item.id)}
+                                              className={`w-full text-left p-3 border transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                                                isItemSelected ? "bg-[#004b8e] text-[#ffffff] border-[#004b8e]" : "bg-[#f9f9f9] hover:bg-[#f0f7ff] text-[#000000] border-[#e1e1e1] hover:border-[#004b8e]"
+                                              }`}
+                                            >
+                                              <div className="min-w-0">
+                                                <span className={`text-[10px] font-bold block ${isItemSelected ? "text-[#38bdf8]" : "text-[#004b8e]"}`}>
+                                                  {queueIdx !== -1 ? (isEn ? `Queue #${queueIdx + 1}` : `Antrean #${queueIdx + 1}`) : isEn ? "Completed" : "Selesai"} • {item.id}
+                                                </span>
+                                                <p className="font-display font-bold text-xs sm:text-sm truncate">{item.authorName}</p>
+                                              </div>
+
+                                              <span
+                                                className={`px-2 py-0.5 text-[10px] font-bold shrink-0 ${
+                                                  item.status === "Selesai"
+                                                    ? isItemSelected
+                                                      ? "bg-[#0693e3] text-[#ffffff]"
+                                                      : "bg-[#0693e3]/15 text-[#004b8e]"
+                                                    : isItemSelected
+                                                      ? "bg-[#ffffff]/20 text-[#ffffff]"
+                                                      : "bg-[#f2552c]/15 text-[#f2552c]"
+                                                }`}
+                                              >
+                                                {translateStatus(item.status, lang)}
+                                              </span>
+                                            </button>
+                                          );
+                                        })
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="lg:col-span-7">
+                        {!trackedManuscript ? (
+                          <div className="bg-[#f9f9f9] border border-dashed border-[#767676] p-8 sm:p-12 text-center">
+                            <div className="w-12 h-12 bg-[#004b8e]/10 text-[#004b8e] flex items-center justify-center mx-auto mb-3">
+                              <SearchIcon className="w-6 h-6" />
+                            </div>
+                            <h2 className="font-display text-lg sm:text-xl font-bold text-[#000000] mb-1.5">{isEn ? "Manuscript Progress Details" : "Detail Progres Manuskrip"}</h2>
+                            <p className="text-xs sm:text-sm text-[#666666] max-w-md mx-auto">
+                              {isEn ? (
+                                <>
+                                  Click any <strong>Research Field</strong> on the left and select an author's name (or use the search bar above) to display review progress details.
+                                </>
+                              ) : (
+                                <>
+                                  Klik salah satu <strong>Bidang Kajian</strong> di sebelah kiri lalu pilih nama penulis manuskrip (atau gunakan kolom pencarian di atas) untuk menampilkan detail progres review.
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="bg-[#f9f9f9] border border-[#e1e1e1] p-5 sm:p-8 animate-page-enter">
+                            <div className="flex items-center justify-between gap-2 mb-4">
+                              <h2 className="font-display text-lg sm:text-xl font-bold text-[#000000]">{isEn ? "Manuscript Progress Details" : "Detail Progres Manuskrip"}</h2>
+                              <button type="button" onClick={() => setSelectedTrackerId(null)} className="text-xs font-semibold text-[#666666] hover:text-[#f2552c] cursor-pointer">
+                                {isEn ? "Close Details ✕" : "Tutup Detail ✕"}
+                              </button>
+                            </div>
+
+                            <div className="bg-[#ffffff] border border-[#e1e1e1] p-5 sm:p-7 space-y-6">
+                              <div className="pb-5 border-b border-[#e1e1e1]">
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                  <span className="text-xs font-bold px-3 py-1 bg-[#004b8e] text-[#ffffff]">{trackedManuscript.id}</span>
+                                  <span className="text-xs font-semibold text-[#666666]">
+                                    {translateDomain(trackedManuscript.domain, lang)} {trackedManuscript.studyField ? `(${translateField(trackedManuscript.studyField, lang)})` : ""} •{" "}
+                                    {isEn ? `Submitted ${trackedManuscript.date}` : `Masuk ${trackedManuscript.date}`}
+                                  </span>
+                                </div>
+
+                                <p className="text-xs uppercase tracking-wider text-[#666666] mt-3">{isEn ? "Author Name" : "Nama Penulis"}</p>
+                                <h3 className="font-display font-bold text-xl sm:text-2xl text-[#000000] leading-snug break-words">{trackedManuscript.authorName}</h3>
+
+                                {trackedQueuePosition !== null && (
+                                  <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-[#f6f6f6] border border-[#e1e1e1] text-xs font-semibold text-[#004b8e]">
+                                    <ClockIcon className="w-4 h-4 text-[#0693e3] shrink-0" />
+                                    <span>{isEn ? `Current Queue Position: #${trackedQueuePosition} in line` : `Posisi Antrean Saat Ini: Urutan ke-${trackedQueuePosition}`}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div>
+                                <div className="flex justify-between text-xs font-bold mb-2">
+                                  <span className="text-[#004b8e]">{isEn ? `Stage ${trackedManuscript.progressStep} of 4` : `Tahap ${trackedManuscript.progressStep} dari 4`}</span>
+                                  <span className="text-[#0693e3]">{trackedManuscript.progressStep * 25}%</span>
+                                </div>
+                                <div className="w-full h-3 bg-[#e1e1e1] overflow-hidden mb-5">
+                                  <div
+                                    className="h-full bg-[#0693e3] transition-all duration-500"
+                                    style={{
+                                      width: `${trackedManuscript.progressStep * 25}%`,
+                                    }}
+                                  />
+                                </div>
+
+                                <ol className="space-y-3 text-xs sm:text-sm">
+                                  {[
+                                    { step: 1, label: isEn ? "PDF Uploaded to Database" : "PDF Telah Masuk Ke Database" },
+                                    { step: 2, label: isEn ? "Team Notified & Added to Review Queue" : "Email Notifikasi Tim & Masuk Daftar Antrean" },
+                                    { step: 3, label: isEn ? "Peer Review Process in Progress" : "Proses Telaah Sedang Dilakukan" },
+                                    { step: 4, label: isEn ? "Revised File & Journal Recommendations Sent via Email" : "File Koreksi & Rekomendasi Jurnal Terkirim via Email" },
+                                  ].map((s) => {
+                                    const done = trackedManuscript.progressStep >= s.step;
+                                    return (
+                                      <li key={s.step} className={`flex items-start gap-3 ${done ? "text-[#000000] font-semibold" : "text-[#666666]"}`}>
+                                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0 mt-0.5 ${done ? "bg-[#0693e3] text-[#ffffff]" : "bg-[#e1e1e1] text-[#666666]"}`}>
+                                          {done ? "✓" : s.step}
+                                        </span>
+                                        <span>{s.label}</span>
+                                      </li>
+                                    );
+                                  })}
+                                </ol>
+                              </div>
+
+                              {trackedManuscript.status === "Selesai" && (
+                                <div className="pt-5 border-t border-[#e1e1e1] space-y-5">
+                                  <div className="bg-[#f6f6f6] p-4 border-l-4 border-[#0693e3]">
+                                    <p className="text-xs font-bold text-[#004b8e] mb-1">{isEn ? "Reviewer Summary Notes:" : "Catatan Ringkas Reviewer:"}</p>
+                                    <p className="text-xs sm:text-sm text-[#333333] leading-relaxed">{trackedManuscript.reviewNotes}</p>
+                                  </div>
+
+                                  {Array.isArray(trackedManuscript.recommendedJournals) && trackedManuscript.recommendedJournals.length > 0 && (
+                                    <div>
+                                      <p className="text-xs font-bold uppercase tracking-wider text-[#000000] mb-3">
+                                        {isEn ? `Recommended Journal Websites (${trackedManuscript.recommendedJournals.length})` : `Daftar Website Jurnal Rekomendasi (${trackedManuscript.recommendedJournals.length})`}
+                                      </p>
+                                      <div className="space-y-2.5">
+                                        {trackedManuscript.recommendedJournals.map((j, idx) => (
+                                          <a
+                                            key={idx}
+                                            href={j.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="block p-3.5 bg-[#f9f9f9] hover:bg-[#004b8e] text-[#000000] hover:text-[#ffffff] border border-[#e1e1e1] transition-colors group"
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <span className="font-bold text-xs sm:text-sm">{j.name}</span>
+                                              <ExternalLinkIcon className="w-4 h-4 text-[#0693e3] group-hover:text-[#ffffff] shrink-0" />
+                                            </div>
+                                            <span className="text-xs text-[#0693e3] group-hover:text-[#dfdfdf] font-semibold block mt-0.5">{j.index}</span>
+                                            {j.reason && <p className="text-xs text-[#666666] group-hover:text-[#dfdfdf] mt-1">{j.reason}</p>}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </main>
+                );
+              })()}
+
+            {/* =====================================================================
+              VIEW 5: PORTAL LOGIN REVIEWER & ADMIN BESAR (ZERO-LEAK SERVER AUTH)
+             ===================================================================== */}
+            {activeView === "login" && (
+              <main
+                key="view-login"
+                className="relative flex-1 min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-5rem)] bg-neutral-900 flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-14 overflow-hidden animate-page-enter"
+              >
+                <div className="absolute inset-0 z-0 pointer-events-none select-none">
+                  {HERO_SLIDE_IMAGES.map((slide, index) => {
+                    const isActive = index === currentSlide;
+                    return (
+                      <img
+                        key={index}
+                        src={slide.src}
+                        alt={slide.alt}
+                        onError={(e) => {
+                          if (slide.fallbackUrl && e.currentTarget.src !== slide.fallbackUrl) {
+                            e.currentTarget.src = slide.fallbackUrl;
+                          }
+                        }}
+                        className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-[1200ms] ease-in-out ${isActive ? "opacity-100 scale-100" : "opacity-0 scale-105"}`}
+                      />
+                    );
+                  })}
+                  <div className="absolute inset-0 bg-black/20" />
+                </div>
+
+                <div className="relative z-10 max-w-md w-full bg-[#ffffff]/85 backdrop-blur-md border border-[#ffffff]/70 p-6 sm:p-10 shadow-2xl">
+                  <div className="w-12 h-12 bg-[#004b8e] text-[#ffffff] flex items-center justify-center mb-6 shadow-sm">
+                    <ShieldCheckIcon className="w-6 h-6" />
+                  </div>
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#000000] mb-2">{isEn ? "Reviewer & Admin Portal" : "Portal Reviewer & Admin"}</h1>
+                  <p className="text-xs text-[#444444] mb-6 leading-relaxed">
+                    {isEn ? "Sign in using your registered institutional email and access PIN to manage and evaluate manuscripts." : "Masuk menggunakan email terdaftar dan PIN akses resmi untuk menelaah manuskrip pada bidang kajian Anda."}
+                  </p>
+
+                  {loginError && <div className="mb-5 p-3.5 bg-[#f2552c]/15 backdrop-blur-xs border border-[#f2552c] text-[#b91c1c] text-xs font-semibold">{loginError}</div>}
+
+                  <form onSubmit={handleReviewerLogin} className="space-y-5">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#222222] mb-2">{isEn ? "Registered Account Email" : "Email Terdaftar"}</label>
+                      <input
+                        type="email"
+                        required
+                        disabled={isLoggingIn}
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        placeholder={isEn ? "name@institution.ac.id" : "nama@institusi.ac.id"}
+                        className="w-full px-4 py-3 bg-[#ffffff]/80 border border-[#cccccc]/80 focus:border-[#004b8e] focus:bg-[#ffffff] outline-none text-sm text-[#000000] transition-colors disabled:opacity-60"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#222222] mb-2">{isEn ? "PIN / Access Code" : "PIN / Kode Akses"}</label>
+                      <input
+                        type="password"
+                        required
+                        disabled={isLoggingIn}
+                        value={loginPin}
+                        onChange={(e) => setLoginPin(e.target.value)}
+                        placeholder="•••••••"
+                        className="w-full px-4 py-3 bg-[#ffffff]/80 border border-[#cccccc]/80 focus:border-[#004b8e] focus:bg-[#ffffff] outline-none text-sm text-[#000000] transition-colors disabled:opacity-60"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoggingIn}
+                      className="w-full py-3.5 bg-[#004b8e] hover:bg-[#0693e3] disabled:bg-[#64748b] text-[#ffffff] font-display font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors shadow-md cursor-pointer disabled:cursor-wait"
+                    >
+                      {isLoggingIn ? (isEn ? "Verifying Credentials..." : "Memverifikasi Akun...") : isEn ? "Sign In to Dashboard" : "Masuk ke Dashboard"}
+                    </button>
+                  </form>
+                </div>
+
+                <div className="relative z-10 mt-6 flex items-center gap-2 bg-black/35 backdrop-blur-xs px-3 py-1.5 border border-[#ffffff]/25">
+                  {HERO_SLIDE_IMAGES.map((_, idx) => {
+                    const isCurrent = idx === currentSlide;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setCurrentSlide(idx)}
+                        aria-label={isEn ? `Show slide ${idx + 1}` : `Tampilkan slide ${idx + 1}`}
+                        className={`h-1.5 transition-all duration-500 cursor-pointer ${isCurrent ? "w-7 bg-[#38bdf8]" : "w-3 bg-[#ffffff]/60 hover:bg-[#ffffff]"}`}
+                      />
+                    );
+                  })}
+                </div>
+              </main>
+            )}
+
+            {/* =====================================================================
+              VIEW 6: DASHBOARD REVIEWER & ADMIN BESAR (LIVE GOOGLE DRIVE & GMAIL)
+             ===================================================================== */}
+            {activeView === "dashboard" &&
+              loggedReviewer &&
+              (() => {
+                const isSuperAdmin = loggedReviewer.role === "admin";
+                const availableStudyFields = isSuperAdmin
+                  ? [...SUB_DOMAIN_SHOWCASE.kelautan.items.map((i) => i.title), ...SUB_DOMAIN_SHOWCASE.perikanan.items.map((i) => i.title)]
+                  : SUB_DOMAIN_SHOWCASE[loggedReviewer.specialty === "Ilmu Kelautan" ? "kelautan" : "perikanan"].items.map((i) => i.title);
+
+                return (
+                  <main key="view-dashboard" className="flex-1 bg-gradient-to-b from-[#002f5c] via-[#003f7a] to-[#004b8e] text-[#ffffff] animate-page-enter">
+                    <div className="sticky top-16 sm:top-20 z-30 bg-[#00284d]/95 backdrop-blur-md text-[#ffffff] border-b border-[#ffffff]/15 shadow-md">
+                      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="text-xs uppercase tracking-widest text-[#dfdfdf]/85">
+                              {isSuperAdmin ? (isEn ? "Active Super Admin Portal" : "Portal Admin Besar Aktif") : isEn ? "Active Reviewer Portal" : "Portal Reviewer Aktif"}
+                            </span>
+                            <span className={`px-2.5 py-0.5 text-[10px] font-display font-bold uppercase tracking-wider ${isSuperAdmin ? "bg-[#f2552c] text-[#ffffff]" : "bg-[#0693e3] text-[#ffffff]"}`}>
+                              {isSuperAdmin
+                                ? isEn
+                                  ? "Super Admin • All Fields"
+                                  : "Admin Besar • Semua Bidang"
+                                : isEn
+                                  ? `${translateDomain(loggedReviewer.specialty, lang)} Field • ${translateField(loggedReviewer.expertise, lang)}`
+                                  : `Bidang ${loggedReviewer.specialty} • ${loggedReviewer.expertise}`}
+                            </span>
+                          </div>
+                          <h1 className="font-display text-xl sm:text-3xl font-bold">{loggedReviewer.name}</h1>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setLoggedReviewer(null);
+                            setSelectedReviewId(null);
+                            fetchPublicManuscripts();
+                            handleNavigate("home");
+                          }}
+                          className="px-4 py-2.5 bg-[#ffffff]/12 hover:bg-[#f2552c] text-[#ffffff] border border-[#ffffff]/25 text-xs font-bold uppercase tracking-wider flex items-center gap-2 self-start cursor-pointer transition-colors"
+                        >
+                          <LogOutIcon className="w-4 h-4" />
+                          <span>{isEn ? "Logout" : "Keluar"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                      {/* KOLOM KIRI: Daftar Antrean Manuskrip */}
+                      <div className="lg:col-span-5 space-y-4">
+                        <div className="bg-[#00284d]/70 border border-[#ffffff]/20 p-4 sm:p-5 space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h2 className="font-display text-lg sm:text-xl font-bold text-[#ffffff]">{isEn ? `Manuscript Queue (${filteredDashboardManuscripts.length})` : `Antrean Manuskrip (${filteredDashboardManuscripts.length})`}</h2>
+
+                            {!isSuperAdmin && <span className="px-2.5 py-1 bg-[#0693e3] text-[#ffffff] text-[11px] font-display font-bold uppercase tracking-wider">{translateField(loggedReviewer.expertise, lang)}</span>}
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {(isSuperAdmin ? ["Semua", "Menunggu", "Ilmu Kelautan", "Perikanan"] : ["Semua", "Menunggu"]).map((tab) => {
+                              const tabLabel = tab === "Semua" ? (isEn ? "All" : "Semua") : tab === "Menunggu" ? (isEn ? "Pending" : "Menunggu") : translateDomain(tab, lang);
+                              return (
+                                <button
+                                  key={tab}
+                                  type="button"
+                                  onClick={() => setDashboardFilter(tab)}
+                                  className={`px-3 py-1.5 text-xs font-bold border transition-colors cursor-pointer ${
+                                    dashboardFilter === tab ? "bg-[#38bdf8] text-[#00284d] border-[#38bdf8]" : "bg-[#ffffff]/10 text-[#ffffff] border-[#ffffff]/25 hover:bg-[#ffffff]/20"
+                                  }`}
+                                >
+                                  {tabLabel}
+                                </button>
+                              );
+                            })}
+
+                            {isSuperAdmin && (
+                              <select
+                                value={dashboardStudyFieldFilter}
+                                onChange={(e) => setDashboardStudyFieldFilter(e.target.value)}
+                                aria-label={isEn ? "Filter Research Field" : "Filter Bidang Kajian"}
+                                className="px-2.5 py-1.5 bg-[#ffffff] text-[#00284d] border border-[#ffffff] text-xs font-bold outline-none cursor-pointer"
+                              >
+                                <option value="Semua Kajian">{isEn ? "Research Field: All" : "Bidang Kajian: Semua"}</option>
+                                {availableStudyFields.map((field) => (
+                                  <option key={field} value={field}>
+                                    {isEn ? `Field: ${translateField(field, lang)}` : `Kajian: ${field}`}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {filteredDashboardManuscripts.length === 0 ? (
+                            <div className="bg-[#ffffff]/10 border border-[#ffffff]/20 p-6 text-center text-xs sm:text-sm text-[#e2e8f0]">
+                              {isEn ? "No manuscripts found for this research field filter." : "Belum ada manuskrip pada filter bidang kajian ini."}
+                            </div>
+                          ) : (
+                            filteredDashboardManuscripts.map((item) => {
+                              const isSelected = activeReviewManuscript && activeReviewManuscript.id === item.id;
+                              return (
+                                <div
+                                  key={item.id}
+                                  onClick={() => {
+                                    setSelectedReviewId(item.id);
+                                    setReviewSuccessBanner("");
+                                    setReviewErrorBanner("");
+                                  }}
+                                  className={`p-4 sm:p-5 border transition-all cursor-pointer shadow-md ${
+                                    isSelected ? "bg-[#ffffff] border-2 border-[#38bdf8] ring-2 ring-[#38bdf8]/40" : "bg-[#ffffff]/95 hover:bg-[#ffffff] border-[#ffffff]/30"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                    <span className="text-xs font-bold text-[#004b8e]">
+                                      {item.id} • {translateDomain(item.domain, lang)} {item.studyField ? `(${translateField(item.studyField, lang)})` : ""}
+                                    </span>
+                                    <span className={`px-2.5 py-0.5 text-[11px] font-bold ${item.status === "Selesai" ? "bg-[#0693e3]/15 text-[#004b8e]" : "bg-[#f2552c]/15 text-[#f2552c]"}`}>{translateStatus(item.status, lang)}</span>
+                                  </div>
+
+                                  <h3 className="font-display font-bold text-sm text-[#000000] line-clamp-2 mb-2">{item.title}</h3>
+                                  <div className="flex items-center justify-between text-xs text-[#666666] gap-2">
+                                    <span className="truncate font-medium text-[#333333]">{item.authorName}</span>
+                                    <span className="shrink-0">{item.date}</span>
+                                  </div>
+                                  <p className="text-[11px] text-[#0693e3] font-medium truncate mt-1">{item.authorEmail}</p>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+
+                      {/* KOLOM KANAN: Lembar Kerja Reviewer */}
+                      <div className="lg:col-span-7">
+                        {!activeReviewManuscript ? (
+                          <div className="bg-[#ffffff]/10 border border-[#ffffff]/25 p-8 text-center text-sm text-[#e2e8f0]">
+                            {isEn ? "No manuscripts available to display in this field." : "Tidak ada manuskrip yang tersedia untuk ditampilkan pada bidang ini."}
+                          </div>
+                        ) : (
+                          <div className="bg-[#ffffff] text-[#333333] border border-[#ffffff]/40 p-5 sm:p-8 space-y-6 shadow-xl">
+                            {reviewSuccessBanner && (
+                              <div className="p-4 bg-[#004b8e] text-[#ffffff] text-xs sm:text-sm flex items-start gap-3">
+                                <CheckCircleIcon className="w-5 h-5 text-[#38bdf8] shrink-0 mt-0.5" />
+                                <span>{reviewSuccessBanner}</span>
+                              </div>
+                            )}
+
+                            {reviewErrorBanner && (
+                              <div className="p-4 bg-[#f2552c]/10 border border-[#f2552c] text-[#b91c1c] text-xs sm:text-sm flex items-start gap-3">
+                                <AlertCircleIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                                <span>{reviewErrorBanner}</span>
+                              </div>
+                            )}
+
+                            <div className="pb-6 border-b border-[#e1e1e1]">
+                              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-[#0693e3]">
+                                  {isEn ? "Manuscript Review Worksheet" : "Lembar Kerja Review Manuscript"} {activeReviewManuscript.id}{" "}
+                                  {activeReviewManuscript.studyField ? `• ${translateField(activeReviewManuscript.studyField, lang)}` : ""}
+                                </span>
+
+                                {activeReviewManuscript.status === "Dalam Antrean" && (
+                                  <button
+                                    type="button"
+                                    disabled={isStartingReview}
+                                    onClick={() => handleStartReview(activeReviewManuscript.id)}
+                                    className="px-3 py-1 bg-[#f2552c] hover:bg-[#004b8e] text-[#ffffff] text-[11px] font-display font-bold uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-60"
+                                  >
+                                    {isStartingReview ? (isEn ? "Updating..." : "Memperbarui...") : isEn ? "Start Review (Mark Under Review)" : "Mulai Telaah (Tandai Sedang Direview)"}
+                                  </button>
+                                )}
+                              </div>
+                              <h2 className="font-display text-lg sm:text-2xl font-bold text-[#000000] mb-3">{activeReviewManuscript.title}</h2>
+                              <p className="text-xs text-[#666666] mb-4 break-words">
+                                {isEn ? "Author:" : "Penulis:"} <strong>{activeReviewManuscript.authorName}</strong> ({activeReviewManuscript.authorEmail}) — {activeReviewManuscript.affiliation}
+                              </p>
+
+                              {/* Kotak File Asli Penulis di Google Drive */}
+                              <div className="p-4 bg-[#f0f6fc] border border-[#004b8e]/20 flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <FileTextIcon className="w-5 h-5 text-[#004b8e] shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-[#000000] truncate">{activeReviewManuscript.originalFileName}</p>
+                                    <p className="text-[11px] text-[#666666]">{isEn ? "Original document stored in Google Drive" : "Dokumen asli tersimpan di Google Drive"}</p>
+                                  </div>
+                                </div>
+                                {activeReviewManuscript.originalFileUrl ? (
+                                  <a
+                                    href={activeReviewManuscript.originalFileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3.5 py-2 bg-[#004b8e] hover:bg-[#0693e3] text-[#ffffff] text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shrink-0"
+                                  >
+                                    <DownloadIcon className="w-3.5 h-3.5" />
+                                    <span>{isEn ? "Download Original PDF" : "Unduh PDF Asli"}</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-[#666666] italic">{isEn ? "Drive link unavailable" : "Link Drive belum tersedia"}</span>
+                                )}
+                              </div>
+
+                              {/* Jika Sudah Selesai Direview, Tampilkan Tautan File Revisi Tersimpan */}
+                              {activeReviewManuscript.status === "Selesai" && activeReviewManuscript.revisedFileUrl && (
+                                <div className="mt-3 p-3.5 bg-[#ecfdf5] border border-[#10b981]/30 flex flex-wrap items-center justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-[#065f46] truncate">{activeReviewManuscript.revisedFileName}</p>
+                                    <p className="text-[11px] text-[#047857]">{isEn ? "Completed revision file archived in Google Drive" : "Arsip file PDF hasil revisi di Google Drive"}</p>
+                                  </div>
+                                  <a
+                                    href={activeReviewManuscript.revisedFileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1.5 bg-[#059669] hover:bg-[#047857] text-[#ffffff] text-xs font-bold flex items-center gap-1.5 shrink-0"
+                                  >
+                                    <DownloadIcon className="w-3.5 h-3.5" />
+                                    <span>{isEn ? "Download Revised PDF" : "Unduh PDF Revisi"}</span>
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+
+                            <form onSubmit={handleCompleteReview} className="space-y-6">
+                              <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-[#353535] mb-2">
+                                  {isEn ? "1. Upload Reviewer's Revised PDF File (Max. 5 MB) *" : "1. Unggah File PDF Hasil Koreksi Reviewer (Maks. 5 MB) *"}
+                                </label>
+                                <input
+                                  ref={revisedFileInputRef}
+                                  type="file"
+                                  accept=".pdf,application/pdf"
+                                  disabled={isCompletingReview}
+                                  onChange={handleRevisedPdfSelect}
+                                  className="w-full px-3 py-2.5 bg-[#f9f9f9] border border-[#e1e1e1] text-xs"
+                                />
+                                {revisedPdfFile && (
+                                  <p className="text-[11px] font-semibold text-[#004b8e] mt-1">
+                                    ✓ {revisedPdfFile.name} ({(revisedPdfFile.size / (1024 * 1024)).toFixed(2)} MB)
+                                  </p>
+                                )}
+                                <p className="text-[11px] text-[#666666] mt-1 break-all">
+                                  {isEn
+                                    ? `This file will be automatically attached to the author's email (${activeReviewManuscript.authorEmail}).`
+                                    : `File ini akan otomatis dilampirkan ke email penulis (${activeReviewManuscript.authorEmail}).`}
+                                </p>
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-[#353535] mb-2">{isEn ? "2. General Notes & Correction Summary" : "2. Catatan Umum & Ringkasan Koreksi"}</label>
+                                <textarea
+                                  rows="3"
+                                  disabled={isCompletingReview}
+                                  value={reviewNotesInput}
+                                  onChange={(e) => setReviewNotesInput(e.target.value)}
+                                  placeholder={isEn ? "Write key revision points on methodology, language, or formatting..." : "Tuliskan poin utama perbaikan metodologi, bahasa, atau format penulisan..."}
+                                  className="w-full px-4 py-3 bg-[#f9f9f9] border border-[#e1e1e1] focus:border-[#004b8e] outline-none text-sm"
+                                />
+                              </div>
+
+                              <div className="space-y-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <label className="block text-xs font-bold uppercase tracking-wider text-[#353535]">{isEn ? "3. Recommended Journal Websites List" : "3. Daftar Website Jurnal Rekomendasi"}</label>
+                                  <button
+                                    type="button"
+                                    disabled={isCompletingReview}
+                                    onClick={handleAddJournalRow}
+                                    className="px-3 py-1.5 bg-[#0693e3] hover:bg-[#004b8e] text-[#ffffff] text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <PlusIcon className="w-3.5 h-3.5" />
+                                    <span>{isEn ? "Add Journal" : "Tambah Jurnal"}</span>
+                                  </button>
+                                </div>
+
+                                {journalListInput.map((journal, idx) => (
+                                  <div key={idx} className="p-4 bg-[#f4f8fc] border border-[#004b8e]/20 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-bold text-[#004b8e]">{isEn ? `Journal Recommendation #${idx + 1}` : `Rekomendasi Jurnal #${idx + 1}`}</span>
+                                      {journalListInput.length > 1 && (
+                                        <button type="button" onClick={() => handleRemoveJournalRow(idx)} className="text-[#f2552c] hover:underline text-xs flex items-center gap-1 cursor-pointer">
+                                          <TrashIcon className="w-3.5 h-3.5" />
+                                          <span>{isEn ? "Remove" : "Hapus"}</span>
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                      <input
+                                        type="text"
+                                        disabled={isCompletingReview}
+                                        placeholder={isEn ? "Target Journal Name" : "Nama Jurnal Tujuan"}
+                                        value={journal.name}
+                                        onChange={(e) => handleUpdateJournalRow(idx, "name", e.target.value)}
+                                        className="sm:col-span-2 px-3 py-2 bg-[#ffffff] border border-[#e1e1e1] text-xs"
+                                      />
+
+                                      <select
+                                        disabled={isCompletingReview}
+                                        value={journal.index}
+                                        onChange={(e) => handleUpdateJournalRow(idx, "index", e.target.value)}
+                                        aria-label={isEn ? "Select Journal Index" : "Pilih Indeks Jurnal"}
+                                        className="px-3 py-2 bg-[#ffffff] border border-[#004b8e]/40 focus:border-[#004b8e] text-xs font-bold text-[#004b8e] outline-none cursor-pointer"
+                                      >
+                                        {JOURNAL_INDEX_OPTIONS.map((opt) => (
+                                          <option key={opt} value={opt}>
+                                            {opt}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+
+                                    <input
+                                      type="url"
+                                      disabled={isCompletingReview}
+                                      placeholder="https://link-website-jurnal.ac.id"
+                                      value={journal.url}
+                                      onChange={(e) => handleUpdateJournalRow(idx, "url", e.target.value)}
+                                      className="w-full px-3 py-2 bg-[#ffffff] border border-[#e1e1e1] text-xs"
+                                    />
+
+                                    <input
+                                      type="text"
+                                      disabled={isCompletingReview}
+                                      placeholder={isEn ? "Reason for suitability with the manuscript..." : "Alasan kecocokan dengan manuskrip..."}
+                                      value={journal.reason}
+                                      onChange={(e) => handleUpdateJournalRow(idx, "reason", e.target.value)}
+                                      className="w-full px-3 py-2 bg-[#ffffff] border border-[#e1e1e1] text-xs"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+
+                              <button
+                                type="submit"
+                                disabled={isCompletingReview}
+                                className="w-full py-3.5 sm:py-4 bg-[#004b8e] hover:bg-[#0693e3] disabled:bg-[#64748b] text-[#ffffff] font-display font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-wait"
+                              >
+                                <MailIcon className="w-4 h-4" />
+                                <span>
+                                  {isCompletingReview
+                                    ? isEn
+                                      ? "Uploading Revised PDF & Sending Emails..."
+                                      : "Mengunggah PDF Revisi & Mengirim Email..."
+                                    : isEn
+                                      ? "Send Revised File & Recommendations to Author Email"
+                                      : "Kirim File Revisi & Rekomendasi ke Email Penulis"}
+                                </span>
+                              </button>
+                            </form>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </main>
+                );
+              })()}
+
+            {/* =====================================================================
+              FOOTER (z-50 agar tampil di atas seluruh lapisan stacking)
+             ===================================================================== */}
+            <footer className="relative z-50 bg-[#004b8e] text-[#ffffff] border-t border-[#0693e3]/40 py-6 sm:py-8">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#e2e8f0] text-center sm:text-left">
+                <span>© 2026 Clinic Manuscripts FPIK Unpad • Powered by Torgas Blue Energy</span>
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#38bdf8] hover:text-[#ffffff] hover:underline font-semibold break-all transition-colors">
+                  {CONTACT_EMAIL}
+                </a>
+              </div>
+            </footer>
+          </div>
+        );
+      }
+
+      // Render Aplikasi ke dalam div #root
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>

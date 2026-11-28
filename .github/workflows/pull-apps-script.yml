@@ -1,0 +1,53 @@
+name: Tarik kode Apps Script ke repo
+
+# Jalankan manual sekali (tab Actions > "Tarik kode Apps Script ke repo" > Run workflow)
+# untuk menyalin kode backend yang sekarang ada di Apps Script ke folder apps-script/.
+# Hasilnya dibuka sebagai pull request, jadi tidak ada yang langsung ter-deploy.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Pasang clasp
+        run: npm install -g @google/clasp@2.4.2
+
+      - name: Tulis kredensial clasp
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+
+      - name: clasp pull
+        working-directory: apps-script
+        run: clasp pull
+
+      - name: Buka pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="apps-script-pull-$(date +%Y%m%d-%H%M%S)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add apps-script
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan dari Apps Script."
+            exit 0
+          fi
+          git commit -m "Tarik kode backend dari Apps Script"
+          git push origin "$BRANCH"
+          gh pr create --title "Tarik kode backend dari Apps Script" \
+            --body "Salinan kode backend dari editor Apps Script (clasp pull)." \
+            --base main --head "$BRANCH"

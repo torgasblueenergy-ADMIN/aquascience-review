@@ -1,0 +1,65 @@
+name: Deploy Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps-script/**"
+  workflow_dispatch:
+
+concurrency:
+  group: apps-script-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps-script
+    env:
+      # ID deployment Web App yang dipakai index.html (bagian /macros/s/<ID>/exec).
+      # Bisa ditimpa lewat repository variable DEPLOYMENT_ID.
+      DEPLOYMENT_ID: ${{ vars.DEPLOYMENT_ID || 'AKfycbzHNzbiKrz7EcXrRau_7ifQZXApXLS2QcreGctpNSCW6h3ZrBIYwPAERQzr4J2mpXOU' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Pasang clasp
+        run: npm install -g @google/clasp@2.4.2
+
+      - name: Tulis kredensial clasp
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          if [ -z "$CLASPRC_JSON" ]; then
+            echo "::error::Secret CLASPRC_JSON belum diisi. Lihat apps-script/README.md"
+            exit 1
+          fi
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+
+      - name: Cek Script ID
+        run: |
+          if grep -q GANTI_DENGAN_SCRIPT_ID .clasp.json; then
+            echo "::error::scriptId di apps-script/.clasp.json masih placeholder."
+            exit 1
+          fi
+
+      - name: Pastikan kode backend sudah ada di repo
+        # Pengaman: clasp push -f menimpa SEMUA file di Apps Script.
+        # Kalau folder ini belum berisi kode (.gs/.js), deploy dibatalkan
+        # supaya backend yang sedang jalan tidak terhapus.
+        run: |
+          if [ -z "$(find . -type f \( -name '*.gs' -o -name '*.js' \) -print -quit)" ]; then
+            echo "::error::Belum ada file .gs/.js di apps-script/. Jalankan workflow 'Tarik kode Apps Script ke repo' dulu."
+            exit 1
+          fi
+
+      - name: Push kode ke Apps Script
+        run: clasp push -f
+
+      - name: Deploy ulang ke URL Web App yang sama
+        run: clasp deploy -i "$DEPLOYMENT_ID" -d "GitHub ${GITHUB_SHA::7}"
